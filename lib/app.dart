@@ -12,7 +12,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Fleet Management',
-      home: const AuthWrapper(), // 👈 THIS is where it's used
+      home: const AuthWrapper(),
     );
   }
 }
@@ -25,19 +25,19 @@ class AuthWrapper extends StatelessWidget {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
-        // ⏳ Loading
+        // Loading
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
 
-        // ✅ Logged in
+        // Logged in
         if (snapshot.hasData) {
           return const HomePage();
         }
 
-        // ❌ Not logged in
+        // Not logged in
         return const AuthPage();
       },
     );

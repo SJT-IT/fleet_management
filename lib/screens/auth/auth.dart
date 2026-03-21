@@ -1,8 +1,8 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-// Main Authentication Page (Login / Signup)
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
 
@@ -11,118 +11,175 @@ class AuthPage extends StatefulWidget {
 }
 
 class _AuthPageState extends State<AuthPage> {
-  // Flag to toggle between Login and Sign Up
   bool isLogin = true;
 
-  //  Controllers for input fields
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
-  // Form key for validation
+  // NEW CONTROLLERS
+  final _nameController = TextEditingController();
+  final _phoneController = TextEditingController();
+
   final _formKey = GlobalKey<FormState>();
 
   @override
   void dispose() {
-    // Dispose controllers to free memory
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _nameController.dispose(); //
+    _phoneController.dispose(); //
     super.dispose();
   }
 
-  // Function to handle login/signup submission
   void _submit() async {
-    if (!_formKey.currentState!.validate()) return; // Validate form
+    if (!_formKey.currentState!.validate()) return;
 
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
-
     final authService = AuthService();
 
     try {
       if (isLogin) {
-        // Login flow
         await authService.login(email, password);
       } else {
-        // Sign Up flow
-        final confirmPassword = _confirmPasswordController.text.trim();
-
-        if (password != confirmPassword) {
-          if (!mounted) return; // Ensure widget is still in tree
+        if (password != _confirmPasswordController.text.trim()) {
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Passwords do not match")),
           );
           return;
         }
 
-        await authService.signup(email, password);
+        // PASS EXTRA DATA
+        await authService.signup(
+          email,
+          password,
+          fullName: _nameController.text.trim(),
+          phone: _phoneController.text.trim(),
+        );
       }
-
-      if (!mounted) return; // AuthWrapper will handle navigation automatically
-
     } on FirebaseAuthException catch (e) {
-      if (!mounted) return; 
-      String message = "Authentication failed";
-
-      // Handle Firebase specific errors
-      if (e.code == 'user-not-found') {
-        message = "No user found for that email";
-      } else if (e.code == 'wrong-password') {
-        message = "Wrong password";
-      } else if (e.code == 'email-already-in-use') {
-        message = "Email already in use";
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-    } catch (e) {
-      if (!mounted) return; 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text("Something went wrong")));
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message ?? "Error")));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue.shade400,
-      body: Center(
-        child: SingleChildScrollView(
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 400),
-            curve: Curves.easeInOut,
-            width: 350,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(25),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color.fromARGB(255, 48, 184, 120),
+              Color.fromARGB(255, 32, 67, 45),
+              Color.fromARGB(255, 15, 39, 24),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: _buildGlassCard(),
             ),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildToggle(), //  Login / Sign Up toggle
-                  const SizedBox(height: 30),
+          ),
+        ),
+      ),
+    );
+  }
 
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    transitionBuilder: (child, animation) {
-                      //  Smooth fade + slide transition between forms
-                      return FadeTransition(
-                        opacity: animation,
-                        child: SlideTransition(
-                          position: Tween<Offset>(
-                            begin: const Offset(0.2, 0),
-                            end: Offset.zero,
-                          ).animate(animation),
-                          child: child,
-                        ),
-                      );
-                    },
-                    child: isLogin ? _loginForm() : _signupForm(),
-                  ),
-                ],
+  Widget _buildGlassCard() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(30),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 1200),
+          curve: Curves.elasticOut,
+          width: 400,
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            color: Colors.white.withAlpha(25),
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(color: Colors.white.withAlpha(50), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(50),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildToggle(),
+                const SizedBox(height: 40),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 600),
+                  switchInCurve: Curves.easeOutBack,
+                  switchOutCurve: Curves.easeIn,
+                  transitionBuilder: (child, animation) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: ScaleTransition(scale: animation, child: child),
+                    );
+                  },
+                  child: isLogin ? _loginForm() : _signupForm(),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildToggle() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.black12,
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Row(
+        children: [
+          _toggleButton("Login", true),
+          _toggleButton("Sign Up", false),
+        ],
+      ),
+    );
+  }
+
+  Widget _toggleButton(String title, bool tabLogin) {
+    bool active = isLogin == tabLogin;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => isLogin = tabLogin),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: active ? Colors.blueAccent : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Center(
+            child: Text(
+              title,
+              style: TextStyle(
+                color: active ? Colors.white : Colors.white70,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),
@@ -131,166 +188,142 @@ class _AuthPageState extends State<AuthPage> {
     );
   }
 
-  // Build the toggle buttons (Login / Sign Up)
-  Widget _buildToggle() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _tabItem("Login", true),
-        const SizedBox(width: 20),
-        _tabItem("Sign Up", false),
-      ],
-    );
-  }
-
-  // Single toggle tab widget
-  Widget _tabItem(String title, bool tabLogin) {
-    final active = isLogin == tabLogin;
-
-    return GestureDetector(
-      onTap: () => setState(() => isLogin = tabLogin),
-      child: Column(
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-              color: active ? Colors.blue : Colors.grey,
-            ),
-          ),
-          const SizedBox(height: 5),
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            height: 2,
-            width: active ? 40 : 0, //  Active tab underline
-            color: Colors.blue,
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Login Form
   Widget _loginForm() {
     return Column(
-      key: const ValueKey("login"), // For AnimatedSwitcher
+      key: const ValueKey("login"),
       children: [
-        _inputField(controller: _emailController, label: "Email"),
-        const SizedBox(height: 15),
+        _inputField(
+          controller: _emailController,
+          label: "Email",
+          icon: Icons.email_outlined,
+        ),
+        const SizedBox(height: 20),
         _inputField(
           controller: _passwordController,
           label: "Password",
           isPassword: true,
+          icon: Icons.lock_outline,
         ),
-
         Align(
           alignment: Alignment.centerRight,
           child: TextButton(
-            onPressed: () {}, // Forgot password functionality placeholder
-            child: const Text("Forgot Password?"),
-          ),
-        ),
-
-        const SizedBox(height: 10),
-        _mainButton("LOGIN"), // Submit button
-
-        const SizedBox(height: 15),
-        GestureDetector(
-          onTap: () => setState(() => isLogin = false),
-          child: const Text.rich(
-            TextSpan(
-              text: "Don't have an account? ",
-              children: [
-                TextSpan(
-                  text: "SIGN UP",
-                  style: TextStyle(color: Colors.blue),
-                ),
-              ],
+            onPressed: () {},
+            child: const Text(
+              "Forgot Password?",
+              style: TextStyle(color: Colors.white70),
             ),
           ),
         ),
+        const SizedBox(height: 20),
+        _mainButton("SIGN IN"),
       ],
     );
   }
 
-  // Sign Up Form
+  // UPDATED SIGNUP FORM
   Widget _signupForm() {
     return Column(
-      key: const ValueKey("signup"), // For AnimatedSwitcher
+      key: const ValueKey("signup"),
       children: [
-        _inputField(controller: _emailController, label: "Email"),
-        const SizedBox(height: 15),
+        _inputField(
+          controller: _nameController,
+          label: "Full Name",
+          icon: Icons.person,
+        ),
+        const SizedBox(height: 20),
+        _inputField(
+          controller: _phoneController,
+          label: "Phone Number",
+          icon: Icons.phone,
+        ),
+        const SizedBox(height: 20),
+        _inputField(
+          controller: _emailController,
+          label: "Email",
+          icon: Icons.email_outlined,
+        ),
+        const SizedBox(height: 20),
         _inputField(
           controller: _passwordController,
           label: "Password",
           isPassword: true,
+          icon: Icons.lock_outline,
         ),
-        const SizedBox(height: 15),
+        const SizedBox(height: 20),
         _inputField(
           controller: _confirmPasswordController,
           label: "Confirm Password",
           isPassword: true,
+          icon: Icons.check_circle_outline,
         ),
-
-        const SizedBox(height: 20),
-        _mainButton("SIGN UP"),
-
-        const SizedBox(height: 15),
-        GestureDetector(
-          onTap: () => setState(() => isLogin = true),
-          child: const Text.rich(
-            TextSpan(
-              text: "Already have an account? ",
-              children: [
-                TextSpan(
-                  text: "LOGIN",
-                  style: TextStyle(color: Colors.blue),
-                ),
-              ],
-            ),
-          ),
-        ),
+        const SizedBox(height: 30),
+        _mainButton("GET STARTED"),
       ],
     );
   }
 
-  // Input Field Widget
   Widget _inputField({
     required TextEditingController controller,
     required String label,
+    required IconData icon,
     bool isPassword = false,
   }) {
     return TextFormField(
       controller: controller,
-      obscureText: isPassword, // Hide password if true
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return "Required"; // Simple validation
-        }
-        return null;
-      },
+      obscureText: isPassword,
+      style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
+        prefixIcon: Icon(icon, color: Colors.white70),
         labelText: label,
-        border: const UnderlineInputBorder(),
+        labelStyle: const TextStyle(color: Colors.white70),
+        filled: true,
+        fillColor: Colors.white.withAlpha(15),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: BorderSide(color: Colors.white24),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: const BorderSide(color: Colors.blueAccent),
+        ),
       ),
     );
   }
 
-  // Main Button Widget (Login / Sign Up)
   Widget _mainButton(String text) {
-    return SizedBox(
+    return Container(
       width: double.infinity,
-      height: 50,
+      height: 55,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(15),
+        gradient: const LinearGradient(
+          colors: [Colors.blueAccent, Colors.cyanAccent],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.blueAccent.withAlpha(76),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
       child: ElevatedButton(
         onPressed: _submit,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue,
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(25),
+            borderRadius: BorderRadius.circular(15),
           ),
         ),
-        child: Text(text),
+        child: Text(
+          text,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
       ),
     );
   }
