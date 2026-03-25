@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fleet_management/widgets/navbar.dart';
-import 'package:fleet_management/screens/odometer/driver_odo.dart';
-import 'package:fleet_management/screens/search/driver_search.dart';
-import 'package:fleet_management/screens/profile/driver_profile.dart';
+import 'package:fleet_management/screens/roles/dealer.dart';
+import 'package:fleet_management/screens/search/dealer_search.dart';
+import 'package:fleet_management/screens/odometer/dealer_odo.dart';
 
-class DriverScreen extends StatefulWidget {
-  const DriverScreen({super.key});
+class DealerProfileScreen extends StatefulWidget {
+  const DealerProfileScreen({super.key});
 
   @override
-  State<DriverScreen> createState() => _DriverScreenState();
+  State<DealerProfileScreen> createState() => _DealerProfileScreenState();
 }
 
-class _DriverScreenState extends State<DriverScreen> {
+class _DealerProfileScreenState extends State<DealerProfileScreen> {
   int _currentIndex = 0;
 
   Future<void> _logout() async {
@@ -26,25 +26,25 @@ class _DriverScreenState extends State<DriverScreen> {
       case 0:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const DriverScreen()),
+          MaterialPageRoute(builder: (_) => const DealerScreen()),
         );
         break;
       case 1:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const DriverSearchScreen()),
+          MaterialPageRoute(builder: (_) => const DealerSearchScreen()),
         );
         break;
       case 2:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const DriverOdoScreen()),
+          MaterialPageRoute(builder: (_) => const DealerOdoScreen()),
         );
         break;
       case 3:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const DriverProfileScreen()),
+          MaterialPageRoute(builder: (_) => const DealerProfileScreen()),
         );
         break;
     }
@@ -66,7 +66,7 @@ class _DriverScreenState extends State<DriverScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text(
-              "Welcome Driver Home Screen",
+              "Welcome Dealer Profile Screen",
               style: TextStyle(fontSize: 24),
             ),
             const SizedBox(height: 10),

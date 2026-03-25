@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fleet_management/widgets/navbar.dart';
+import 'package:fleet_management/screens/roles/driver.dart';
 import 'package:fleet_management/screens/odometer/driver_odo.dart';
-import 'package:fleet_management/screens/search/driver_search.dart';
 import 'package:fleet_management/screens/profile/driver_profile.dart';
 
-class DriverScreen extends StatefulWidget {
-  const DriverScreen({super.key});
+class DriverSearchScreen extends StatefulWidget {
+  const DriverSearchScreen({super.key});
 
   @override
-  State<DriverScreen> createState() => _DriverScreenState();
+  State<DriverSearchScreen> createState() => _DriverSearchScreenState();
 }
 
-class _DriverScreenState extends State<DriverScreen> {
+class _DriverSearchScreenState extends State<DriverSearchScreen> {
   int _currentIndex = 0;
 
   Future<void> _logout() async {
@@ -66,7 +66,7 @@ class _DriverScreenState extends State<DriverScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text(
-              "Welcome Driver Home Screen",
+              "Welcome Driver Search Screen",
               style: TextStyle(fontSize: 24),
             ),
             const SizedBox(height: 10),
