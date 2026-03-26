@@ -21,39 +21,18 @@ class _AdminScreenState extends State<AdminScreen> {
 
   void _onNavTap(int index) {
     setState(() => _currentIndex = index);
-
-    switch (index) {
-      case 0:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const AdminScreen()),
-        );
-        break;
-      case 1:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const AdminSearchScreen()),
-        );
-        break;
-      case 2:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const AdminOdoScreen()),
-        );
-        break;
-      case 3:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const AdminProfileScreen()),
-        );
-        break;
-    }
   }
+
+  // 👇 Pages for each tab
+  late final List<Widget> _pages = [
+    const AdminHomeContent(),
+    const AdminSearchScreen(),
+    const AdminOdoScreen(),
+    const AdminProfileScreen(),
+  ];
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text("Fleet Management"),
@@ -61,24 +40,44 @@ class _AdminScreenState extends State<AdminScreen> {
           IconButton(onPressed: _logout, icon: const Icon(Icons.logout)),
         ],
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              "Welcome Admin Home Screen",
-              style: TextStyle(fontSize: 24),
-            ),
-            const SizedBox(height: 10),
-            Text(user?.email ?? "No Email"),
-            const SizedBox(height: 30),
-            ElevatedButton(onPressed: _logout, child: const Text("Logout")),
-          ],
-        ),
-      ),
+
+      // Switch content instead of navigating
+      body: _pages[_currentIndex],
+
       bottomNavigationBar: AppNavbar(
         currentIndex: _currentIndex,
         onTap: _onNavTap,
+      ),
+    );
+  }
+}
+
+//  Extracted Home Content (your original body)
+class AdminHomeContent extends StatelessWidget {
+  const AdminHomeContent({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            "Welcome Admin Home Screen",
+            style: TextStyle(fontSize: 24),
+          ),
+          const SizedBox(height: 10),
+          Text(user?.email ?? "No Email"),
+          const SizedBox(height: 30),
+          ElevatedButton(
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+            },
+            child: const Text("Logout"),
+          ),
+        ],
       ),
     );
   }

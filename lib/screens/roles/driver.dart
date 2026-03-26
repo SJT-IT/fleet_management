@@ -21,39 +21,18 @@ class _DriverScreenState extends State<DriverScreen> {
 
   void _onNavTap(int index) {
     setState(() => _currentIndex = index);
-
-    switch (index) {
-      case 0:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const DriverScreen()),
-        );
-        break;
-      case 1:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const DriverSearchScreen()),
-        );
-        break;
-      case 2:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const DriverOdoScreen()),
-        );
-        break;
-      case 3:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const DriverProfileScreen()),
-        );
-        break;
-    }
   }
+
+  // 👇 Pages for each tab
+  late final List<Widget> _pages = [
+    const DriverHomeContent(),
+    const DriverSearchScreen(),
+    const DriverOdoScreen(),
+    const DriverProfileScreen(),
+  ];
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text("Fleet Management"),
@@ -61,24 +40,44 @@ class _DriverScreenState extends State<DriverScreen> {
           IconButton(onPressed: _logout, icon: const Icon(Icons.logout)),
         ],
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              "Welcome Driver Home Screen",
-              style: TextStyle(fontSize: 24),
-            ),
-            const SizedBox(height: 10),
-            Text(user?.email ?? "No Email"),
-            const SizedBox(height: 30),
-            ElevatedButton(onPressed: _logout, child: const Text("Logout")),
-          ],
-        ),
-      ),
+
+      // Switch content instead of navigating
+      body: _pages[_currentIndex],
+
       bottomNavigationBar: AppNavbar(
         currentIndex: _currentIndex,
         onTap: _onNavTap,
+      ),
+    );
+  }
+}
+
+//  Extracted Home Content (your original body)
+class DriverHomeContent extends StatelessWidget {
+  const DriverHomeContent({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            "Welcome Driver Home Screen",
+            style: TextStyle(fontSize: 24),
+          ),
+          const SizedBox(height: 10),
+          Text(user?.email ?? "No Email"),
+          const SizedBox(height: 30),
+          ElevatedButton(
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+            },
+            child: const Text("Logout"),
+          ),
+        ],
       ),
     );
   }
