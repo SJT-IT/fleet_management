@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fleet_management/widgets/navbar.dart';
-import 'package:fleet_management/screens/odometer/dealer_odo.dart';
-import 'package:fleet_management/screens/profile/dealer_profile.dart';
-import 'package:fleet_management/screens/search/dealer_search.dart';
+import 'package:fleet_management/screens/roles/admin/admin_search.dart';
+import 'package:fleet_management/screens/roles/admin/admin_odo.dart';
+import 'package:fleet_management/screens/roles/admin/admin_profile.dart';
 
-class DealerScreen extends StatefulWidget {
-  const DealerScreen({super.key});
+class AdminScreen extends StatefulWidget {
+  const AdminScreen({super.key});
 
   @override
-  State<DealerScreen> createState() => _DealerScreenState();
+  State<AdminScreen> createState() => _AdminScreenState();
 }
 
-class _DealerScreenState extends State<DealerScreen> {
+class _AdminScreenState extends State<AdminScreen> {
   int _currentIndex = 0;
 
   Future<void> _logout() async {
@@ -25,10 +25,10 @@ class _DealerScreenState extends State<DealerScreen> {
 
   // 👇 Pages for each tab
   late final List<Widget> _pages = [
-    const DealerHomeContent(),
-    const DealerSearchScreen(),
-    const DealerOdoScreen(),
-    const DealerProfileScreen(),
+    const AdminHomeContent(),
+    const AdminSearchScreen(),
+    const AdminOdoScreen(),
+    const AdminProfileScreen(),
   ];
 
   @override
@@ -53,8 +53,8 @@ class _DealerScreenState extends State<DealerScreen> {
 }
 
 //  Extracted Home Content (your original body)
-class DealerHomeContent extends StatelessWidget {
-  const DealerHomeContent({super.key});
+class AdminHomeContent extends StatelessWidget {
+  const AdminHomeContent({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +65,7 @@ class DealerHomeContent extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Text(
-            "Welcome Dealer Home Screen",
+            "Welcome Admin Home Screen",
             style: TextStyle(fontSize: 24),
           ),
           const SizedBox(height: 10),

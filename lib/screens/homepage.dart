@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fleet_management/screens/auth/auth.dart';
-import 'package:fleet_management/screens/roles/admin.dart';
-import 'package:fleet_management/screens/roles/dealer.dart';
-import 'package:fleet_management/screens/roles/driver.dart';
+import 'package:fleet_management/screens/roles/admin/admin.dart';
+import 'package:fleet_management/screens/roles/dealer/dealer.dart';
+import 'package:fleet_management/screens/roles/driver/driver.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});

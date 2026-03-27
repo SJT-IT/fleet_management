@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fleet_management/widgets/navbar.dart';
-import 'package:fleet_management/screens/odometer/driver_odo.dart';
-import 'package:fleet_management/screens/search/driver_search.dart';
-import 'package:fleet_management/screens/profile/driver_profile.dart';
+import 'package:fleet_management/screens/roles/driver/driver_odo.dart';
+import 'package:fleet_management/screens/roles/driver/driver_search.dart';
+import 'package:fleet_management/screens/roles/driver/driver_profile.dart';
 
 class DriverScreen extends StatefulWidget {
   const DriverScreen({super.key});

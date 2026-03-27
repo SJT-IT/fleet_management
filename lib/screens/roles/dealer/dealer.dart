@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fleet_management/widgets/navbar.dart';
-import 'package:fleet_management/screens/search/admin_search.dart';
-import 'package:fleet_management/screens/odometer/admin_odo.dart';
-import 'package:fleet_management/screens/profile/admin_profile.dart';
+import 'package:fleet_management/screens/roles/dealer/dealer_odo.dart';
+import 'package:fleet_management/screens/roles/dealer/dealer_profile.dart';
+import 'package:fleet_management/screens/roles/dealer/dealer_search.dart';
 
-class AdminScreen extends StatefulWidget {
-  const AdminScreen({super.key});
+class DealerScreen extends StatefulWidget {
+  const DealerScreen({super.key});
 
   @override
-  State<AdminScreen> createState() => _AdminScreenState();
+  State<DealerScreen> createState() => _DealerScreenState();
 }
 
-class _AdminScreenState extends State<AdminScreen> {
+class _DealerScreenState extends State<DealerScreen> {
   int _currentIndex = 0;
 
   Future<void> _logout() async {
@@ -25,10 +25,10 @@ class _AdminScreenState extends State<AdminScreen> {
 
   // 👇 Pages for each tab
   late final List<Widget> _pages = [
-    const AdminHomeContent(),
-    const AdminSearchScreen(),
-    const AdminOdoScreen(),
-    const AdminProfileScreen(),
+    const DealerHomeContent(),
+    const DealerSearchScreen(),
+    const DealerOdoScreen(),
+    const DealerProfileScreen(),
   ];
 
   @override
@@ -53,8 +53,8 @@ class _AdminScreenState extends State<AdminScreen> {
 }
 
 //  Extracted Home Content (your original body)
-class AdminHomeContent extends StatelessWidget {
-  const AdminHomeContent({super.key});
+class DealerHomeContent extends StatelessWidget {
+  const DealerHomeContent({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +65,7 @@ class AdminHomeContent extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Text(
-            "Welcome Admin Home Screen",
+            "Welcome Dealer Home Screen",
             style: TextStyle(fontSize: 24),
           ),
           const SizedBox(height: 10),
