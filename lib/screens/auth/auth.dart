@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -7,17 +6,15 @@ class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
 
   @override
-  State<AuthPage> createState() => _AuthPageState();
+  State<AuthPage> createState() => _AuthPageLightState();
 }
 
-class _AuthPageState extends State<AuthPage> {
+class _AuthPageLightState extends State<AuthPage> {
   bool isLogin = true;
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-
-  // NEW CONTROLLERS
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
 
@@ -28,8 +25,8 @@ class _AuthPageState extends State<AuthPage> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _nameController.dispose(); //
-    _phoneController.dispose(); //
+    _nameController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
@@ -52,7 +49,6 @@ class _AuthPageState extends State<AuthPage> {
           return;
         }
 
-        // PASS EXTRA DATA
         await authService.signup(
           email,
           password,
@@ -71,76 +67,44 @@ class _AuthPageState extends State<AuthPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color.fromARGB(255, 48, 184, 120),
-              Color.fromARGB(255, 32, 67, 45),
-              Color.fromARGB(255, 15, 39, 24),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Center(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: _buildGlassCard(),
-            ),
-          ),
+      backgroundColor: const Color(0xFFF9FAFB),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: _buildCard(),
         ),
       ),
     );
   }
 
-  Widget _buildGlassCard() {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(30),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 1200),
-          curve: Curves.elasticOut,
-          width: 400,
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-            color: Colors.white.withAlpha(25),
-            borderRadius: BorderRadius.circular(30),
-            border: Border.all(color: Colors.white.withAlpha(50), width: 1.5),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(50),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
+  Widget _buildCard() {
+    return Container(
+      width: 400,
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(13),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
           ),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildToggle(),
-                const SizedBox(height: 40),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 600),
-                  switchInCurve: Curves.easeOutBack,
-                  switchOutCurve: Curves.easeIn,
-                  transitionBuilder: (child, animation) {
-                    return FadeTransition(
-                      opacity: animation,
-                      child: ScaleTransition(scale: animation, child: child),
-                    );
-                  },
-                  child: isLogin ? _loginForm() : _signupForm(),
-                ),
-              ],
+        ],
+      ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildToggle(),
+            const SizedBox(height: 30),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 400),
+              child: isLogin ? _loginForm() : _signupForm(),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -150,8 +114,8 @@ class _AuthPageState extends State<AuthPage> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.black12,
-        borderRadius: BorderRadius.circular(15),
+        color: const Color(0xFFF3F4F6),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
@@ -164,22 +128,23 @@ class _AuthPageState extends State<AuthPage> {
 
   Widget _toggleButton(String title, bool tabLogin) {
     bool active = isLogin == tabLogin;
+
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() => isLogin = tabLogin),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 250),
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: active ? Colors.blueAccent : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
+            color: active ? const Color(0xFF22C55E) : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
           ),
           child: Center(
             child: Text(
               title,
               style: TextStyle(
-                color: active ? Colors.white : Colors.white70,
-                fontWeight: FontWeight.bold,
+                color: active ? Colors.white : const Color(0xFF6B7280),
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -196,13 +161,15 @@ class _AuthPageState extends State<AuthPage> {
           controller: _emailController,
           label: "Email",
           icon: Icons.email_outlined,
+          isDark: false,
         ),
         const SizedBox(height: 20),
         _inputField(
           controller: _passwordController,
           label: "Password",
-          isPassword: true,
           icon: Icons.lock_outline,
+          isPassword: true,
+          isDark: false,
         ),
         Align(
           alignment: Alignment.centerRight,
@@ -210,7 +177,7 @@ class _AuthPageState extends State<AuthPage> {
             onPressed: () {},
             child: const Text(
               "Forgot Password?",
-              style: TextStyle(color: Colors.white70),
+              style: TextStyle(color: Color(0xFF6B7280)),
             ),
           ),
         ),
@@ -220,7 +187,6 @@ class _AuthPageState extends State<AuthPage> {
     );
   }
 
-  // UPDATED SIGNUP FORM
   Widget _signupForm() {
     return Column(
       key: const ValueKey("signup"),
@@ -229,34 +195,39 @@ class _AuthPageState extends State<AuthPage> {
           controller: _nameController,
           label: "Full Name",
           icon: Icons.person,
+          isDark: false,
         ),
         const SizedBox(height: 20),
         _inputField(
           controller: _phoneController,
           label: "Phone Number",
           icon: Icons.phone,
+          isDark: false,
         ),
         const SizedBox(height: 20),
         _inputField(
           controller: _emailController,
           label: "Email",
           icon: Icons.email_outlined,
+          isDark: false,
         ),
         const SizedBox(height: 20),
         _inputField(
           controller: _passwordController,
           label: "Password",
-          isPassword: true,
           icon: Icons.lock_outline,
+          isPassword: true,
+          isDark: false,
         ),
         const SizedBox(height: 20),
         _inputField(
           controller: _confirmPasswordController,
           label: "Confirm Password",
-          isPassword: true,
           icon: Icons.check_circle_outline,
+          isPassword: true,
+          isDark: false,
         ),
-        const SizedBox(height: 30),
+        const SizedBox(height: 25),
         _mainButton("GET STARTED"),
       ],
     );
@@ -267,24 +238,40 @@ class _AuthPageState extends State<AuthPage> {
     required String label,
     required IconData icon,
     bool isPassword = false,
+    required bool isDark,
   }) {
     return TextFormField(
       controller: controller,
       obscureText: isPassword,
-      style: const TextStyle(color: Colors.white),
+      style: TextStyle(
+        color: isDark ? const Color(0xFFF9FAFB) : const Color(0xFF111827),
+      ),
       decoration: InputDecoration(
-        prefixIcon: Icon(icon, color: Colors.white70),
+        prefixIcon: Icon(
+          icon,
+          color: isDark ? Colors.white60 : const Color(0xFF6B7280),
+        ),
         labelText: label,
-        labelStyle: const TextStyle(color: Colors.white70),
+        labelStyle: TextStyle(
+          color: isDark ? Colors.white60 : const Color(0xFF6B7280),
+        ),
         filled: true,
-        fillColor: Colors.white.withAlpha(15),
+        fillColor: isDark ? const Color(0xFF1F2937) : const Color(0xFFF3F4F6),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: BorderSide.none,
+        ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(color: Colors.white24),
+          borderSide: BorderSide(
+            color: isDark
+                ? Colors.white.withAlpha(13)
+                : const Color(0xFFE5E7EB),
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(color: Colors.blueAccent),
+          borderSide: BorderSide(color: const Color(0xFF22C55E)),
         ),
       ),
     );
@@ -296,14 +283,12 @@ class _AuthPageState extends State<AuthPage> {
       height: 55,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(15),
-        gradient: const LinearGradient(
-          colors: [Colors.blueAccent, Colors.cyanAccent],
-        ),
+        color: const Color(0xFF22C55E),
         boxShadow: [
           BoxShadow(
-            color: Colors.blueAccent.withAlpha(76),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+            color: const Color(0xFF22C55E).withAlpha(78),
+            blurRadius: 15,
+            spreadRadius: 1,
           ),
         ],
       ),
@@ -321,7 +306,7 @@ class _AuthPageState extends State<AuthPage> {
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Colors.black87,
           ),
         ),
       ),
