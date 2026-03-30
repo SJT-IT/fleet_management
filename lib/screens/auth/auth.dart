@@ -1,6 +1,8 @@
+import 'package:fleet_management/provider/auth_provider.dart';
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
@@ -30,50 +32,47 @@ class _AuthPageLightState extends State<AuthPage> {
     super.dispose();
   }
 
-  void _submit() async {
+  void _submit() {
     if (!_formKey.currentState!.validate()) return;
 
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
-    final authService = AuthService();
+    final auth = context.read<AppAuthProvider>();
 
-    try {
-      if (isLogin) {
-        await authService.login(email, password);
-      } else {
-        if (password != _confirmPasswordController.text.trim()) {
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Passwords do not match")),
-          );
-          return;
-        }
-
-        await authService.signup(
-          email,
-          password,
-          fullName: _nameController.text.trim(),
-          phone: _phoneController.text.trim(),
-        );
-      }
-    } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.message ?? "Error")));
+    if (isLogin) {
+      auth.login(_emailController.text.trim(), _passwordController.text.trim());
+    } else {
+      auth.signup(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+        confirmPassword: _confirmPasswordController.text.trim(),
+        name: _nameController.text.trim(),
+        phone: _phoneController.text.trim(),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: _buildCard(),
-        ),
-      ),
+    return Consumer<AppAuthProvider>(
+      builder: (context, auth, child) {
+        // SHOW SNACKBAR WHEN ERROR CHANGES
+        if (auth.error != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(auth.error!)));
+          });
+        }
+
+        return Scaffold(
+          backgroundColor: const Color(0xFFF9FAFB),
+          body: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: _buildCard(),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -278,38 +277,44 @@ class _AuthPageLightState extends State<AuthPage> {
   }
 
   Widget _mainButton(String text) {
-    return Container(
-      width: double.infinity,
-      height: 55,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(15),
-        color: const Color(0xFF22C55E),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF22C55E).withAlpha(78),
-            blurRadius: 15,
-            spreadRadius: 1,
-          ),
-        ],
-      ),
-      child: ElevatedButton(
-        onPressed: _submit,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
+    return Consumer<AppAuthProvider>(
+      builder: (context, auth, child) {
+        return Container(
+          width: double.infinity,
+          height: 55,
+          decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(15),
+            color: const Color(0xFF22C55E),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF22C55E).withAlpha(78),
+                blurRadius: 15,
+                spreadRadius: 1,
+              ),
+            ],
           ),
-        ),
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
+          child: ElevatedButton(
+            onPressed: auth.isLoading ? null : _submit,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
+            ),
+            child: auth.isLoading
+                ? const CircularProgressIndicator(color: Colors.white)
+                : Text(
+                    text,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

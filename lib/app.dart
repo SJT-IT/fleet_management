@@ -1,6 +1,8 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
+import 'package:fleet_management/provider/auth_provider.dart';
 import 'screens/auth/auth.dart';
 import 'screens/homepage.dart';
 
@@ -9,10 +11,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Fleet Management',
-      home: const AuthWrapper(),
+    return ChangeNotifierProvider(
+      create: (_) => AppAuthProvider(),
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Fleet Management',
+        home: const AuthWrapper(),
+      ),
     );
   }
 }
