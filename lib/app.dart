@@ -1,10 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-
 import 'package:fleet_management/provider/auth_provider.dart';
-import 'screens/auth/auth.dart';
-import 'screens/homepage.dart';
+import 'package:fleet_management/screens/auth/auth.dart';
+import 'package:fleet_management/screens/roles/admin/admin.dart';
+import 'package:fleet_management/screens/roles/dealer/dealer.dart';
+import 'package:fleet_management/screens/roles/driver/driver.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -22,29 +23,100 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class AuthWrapper extends StatelessWidget {
+class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
 
   @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
+  bool _hasShownError = false;
+
+  @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        // Loading
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
+    final auth = context.watch<AppAuthProvider>();
+    final user = FirebaseAuth.instance.currentUser;
 
-        // Logged in
-        if (snapshot.hasData) {
-          return const HomePage();
-        }
+    // Show spinner if loading
+    if (auth.isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
-        // Not logged in
-        return const AuthPage();
-      },
-    );
+    // Show AuthPage if not logged in
+    if (user == null) {
+      _showErrorSnackbar(auth);
+      return const AuthPage();
+    }
+
+    // If logged in but there is an error (like user not in Firestore)
+    if (auth.error != null) {
+      _showErrorSnackbar(auth);
+      return const AuthPage();
+    }
+
+    // User logged in → check role and redirect
+    switch (auth.currentUserRole) {
+      case 'Admin':
+        return const AdminScreen();
+      case 'Dealer':
+        return const DealerScreen();
+      case 'Driver':
+        return const DriverScreen();
+      default:
+        return Scaffold(
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Role not assigned. Please contact admin or try logging in again.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () async {
+                      // Log out the user and reset provider state
+                      final auth = context.read<AppAuthProvider>();
+                      await auth.logout();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF22C55E),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Back to Login',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+    }
+  }
+
+  void _showErrorSnackbar(AppAuthProvider auth) {
+    if (auth.error != null && !_hasShownError) {
+      _hasShownError = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(auth.error!)));
+      });
+    }
   }
 }

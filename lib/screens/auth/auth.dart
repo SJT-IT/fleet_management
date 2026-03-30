@@ -1,17 +1,15 @@
 import 'package:fleet_management/provider/auth_provider.dart';
 import 'package:flutter/material.dart';
-import '../../services/auth_service.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
 
   @override
-  State<AuthPage> createState() => _AuthPageLightState();
+  State<AuthPage> createState() => _AuthPageState();
 }
 
-class _AuthPageLightState extends State<AuthPage> {
+class _AuthPageState extends State<AuthPage> {
   bool isLogin = true;
 
   final _emailController = TextEditingController();
@@ -32,15 +30,18 @@ class _AuthPageLightState extends State<AuthPage> {
     super.dispose();
   }
 
-  void _submit() {
+  void _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
     final auth = context.read<AppAuthProvider>();
 
     if (isLogin) {
-      auth.login(_emailController.text.trim(), _passwordController.text.trim());
+      await auth.login(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+      );
     } else {
-      auth.signup(
+      await auth.signup(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
         confirmPassword: _confirmPasswordController.text.trim(),
@@ -48,31 +49,38 @@ class _AuthPageLightState extends State<AuthPage> {
         phone: _phoneController.text.trim(),
       );
     }
+
+    // Show error if exists
+    if (auth.error != null && mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(auth.error!)));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AppAuthProvider>(
-      builder: (context, auth, child) {
-        // SHOW SNACKBAR WHEN ERROR CHANGES
-        if (auth.error != null) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(auth.error!)));
-          });
-        }
+    final auth = context.watch<AppAuthProvider>();
 
-        return Scaffold(
-          backgroundColor: const Color(0xFFF9FAFB),
-          body: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: _buildCard(),
-            ),
+    return Scaffold(
+      backgroundColor: const Color(0xFFF9FAFB),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Stack(
+            children: [
+              _buildCard(),
+              if (auth.isLoading)
+                const Positioned.fill(
+                  child: ColoredBox(
+                    color: Colors.black26,
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 

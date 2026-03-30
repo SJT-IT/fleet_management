@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import 'package:fleet_management/provider/auth_provider.dart';
 import 'package:fleet_management/screens/auth/auth.dart';
 import 'package:fleet_management/screens/roles/admin/admin.dart';
 import 'package:fleet_management/screens/roles/dealer/dealer.dart';
@@ -9,59 +9,30 @@ import 'package:fleet_management/screens/roles/driver/driver.dart';
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
-  Future<String?> getUserRole(String uid) async {
-    final doc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .get();
-
-    if (doc.exists) {
-      return doc['role'];
-    }
-    return null;
-  }
-
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        // Loading state
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
+    final auth = context.watch<AppAuthProvider>();
 
-        // Not logged in
-        if (!snapshot.hasData) {
-          return const AuthPage();
-        }
+    // Loading state
+    if (auth.isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
-        final user = snapshot.data!;
+    // Not logged in
+    if (auth.currentUserRole == null) {
+      return const AuthPage();
+    }
 
-        // Logged in → fetch role
-        return FutureBuilder<String?>(
-          future: getUserRole(user.uid),
-          builder: (context, roleSnapshot) {
-            if (roleSnapshot.connectionState == ConnectionState.waiting) {
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
-            }
-
-            final role = roleSnapshot.data;
-
-            if (role == "Admin") return const AdminScreen();
-            if (role == "Dealer") return const DealerScreen();
-            if (role == "Driver") return const DriverScreen();
-
-            return const Scaffold(
-              body: Center(child: Text("Role not assigned")),
-            );
-          },
-        );
-      },
-    );
+    // Role-based routing
+    switch (auth.currentUserRole) {
+      case 'Admin':
+        return const AdminScreen();
+      case 'Dealer':
+        return const DealerScreen();
+      case 'Driver':
+        return const DriverScreen();
+      default:
+        return const Scaffold(body: Center(child: Text('Role not assigned')));
+    }
   }
 }
