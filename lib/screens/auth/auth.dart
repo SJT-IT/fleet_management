@@ -1,7 +1,9 @@
-import 'package:fleet_management/provider/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:fleet_management/provider/auth_provider.dart';
+import 'package:fleet_management/screens/auth/forgot_password.dart';
 
+// Main Authentication Page widget
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
 
@@ -10,18 +12,22 @@ class AuthPage extends StatefulWidget {
 }
 
 class _AuthPageState extends State<AuthPage> {
+  // Flag to determine whether we're in login or signup mode
   bool isLogin = true;
 
+  // Controllers for text input fields
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
 
+  // Key for validating the form
   final _formKey = GlobalKey<FormState>();
 
   @override
   void dispose() {
+    // Dispose controllers when widget is removed to free resources
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -30,17 +36,21 @@ class _AuthPageState extends State<AuthPage> {
     super.dispose();
   }
 
+  // Handles login/signup submission
   void _submit() async {
+    // Validate form first
     if (!_formKey.currentState!.validate()) return;
 
     final auth = context.read<AppAuthProvider>();
 
     if (isLogin) {
+      // Call login method from provider
       await auth.login(
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );
     } else {
+      // Call signup method from provider
       await auth.signup(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
@@ -50,7 +60,7 @@ class _AuthPageState extends State<AuthPage> {
       );
     }
 
-    // Show error if exists
+    // Show error if authentication fails
     if (auth.error != null && mounted) {
       ScaffoldMessenger.of(
         context,
@@ -69,7 +79,9 @@ class _AuthPageState extends State<AuthPage> {
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Stack(
             children: [
+              // Main card with form
               _buildCard(),
+              // Show loading overlay if provider is busy
               if (auth.isLoading)
                 const Positioned.fill(
                   child: ColoredBox(
@@ -84,6 +96,7 @@ class _AuthPageState extends State<AuthPage> {
     );
   }
 
+  // Builds the card containing login/signup forms
   Widget _buildCard() {
     return Container(
       width: 400,
@@ -105,8 +118,9 @@ class _AuthPageState extends State<AuthPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildToggle(),
+            _buildToggle(), // Login/Sign Up toggle
             const SizedBox(height: 30),
+            // AnimatedSwitcher to smoothly switch between forms
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 400),
               child: isLogin ? _loginForm() : _signupForm(),
@@ -117,6 +131,7 @@ class _AuthPageState extends State<AuthPage> {
     );
   }
 
+  // Builds the toggle buttons for login/signup
   Widget _buildToggle() {
     return Container(
       padding: const EdgeInsets.all(4),
@@ -133,6 +148,7 @@ class _AuthPageState extends State<AuthPage> {
     );
   }
 
+  // Single toggle button
   Widget _toggleButton(String title, bool tabLogin) {
     bool active = isLogin == tabLogin;
 
@@ -160,6 +176,7 @@ class _AuthPageState extends State<AuthPage> {
     );
   }
 
+  // Login form layout
   Widget _loginForm() {
     return Column(
       key: const ValueKey("login"),
@@ -178,22 +195,33 @@ class _AuthPageState extends State<AuthPage> {
           isPassword: true,
           isDark: false,
         ),
+        const SizedBox(height: 10),
         Align(
           alignment: Alignment.centerRight,
           child: TextButton(
-            onPressed: () {},
+            onPressed: () {
+              // Navigate to Forgot Password page
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      ForgotPasswordPage(email: _emailController.text.trim()),
+                ),
+              );
+            },
             child: const Text(
               "Forgot Password?",
               style: TextStyle(color: Color(0xFF6B7280)),
             ),
           ),
         ),
-        const SizedBox(height: 20),
-        _mainButton("SIGN IN"),
+        const SizedBox(height: 10),
+        _mainButton("SIGN IN"), // Main login button
       ],
     );
   }
 
+  // Sign-up form layout
   Widget _signupForm() {
     return Column(
       key: const ValueKey("signup"),
@@ -235,11 +263,12 @@ class _AuthPageState extends State<AuthPage> {
           isDark: false,
         ),
         const SizedBox(height: 25),
-        _mainButton("GET STARTED"),
+        _mainButton("GET STARTED"), // Main signup button
       ],
     );
   }
 
+  // Input field widget with styling
   Widget _inputField({
     required TextEditingController controller,
     required String label,
@@ -284,6 +313,7 @@ class _AuthPageState extends State<AuthPage> {
     );
   }
 
+  // Main login/signup button with loading state
   Widget _mainButton(String text) {
     return Consumer<AppAuthProvider>(
       builder: (context, auth, child) {
@@ -302,7 +332,7 @@ class _AuthPageState extends State<AuthPage> {
             ],
           ),
           child: ElevatedButton(
-            onPressed: auth.isLoading ? null : _submit,
+            onPressed: auth.isLoading ? null : _submit, // Disable when loading
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.transparent,
               shadowColor: Colors.transparent,

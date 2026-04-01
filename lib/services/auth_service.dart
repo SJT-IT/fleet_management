@@ -17,14 +17,13 @@ class AuthService {
     return result.user;
   }
 
-  // Updated Sign Up
+  // Sign Up
   Future<User?> signup(
     String email,
     String password, {
     required String fullName,
     required String phone,
   }) async {
-    // Create user in Firebase Auth
     final result = await _auth.createUserWithEmailAndPassword(
       email: email,
       password: password,
@@ -35,31 +34,42 @@ class AuthService {
     if (user != null) {
       final uid = user.uid;
 
-      // Save user data in Firestore
       await _firestore.collection('users').doc(uid).set({
         'userId': uid,
         'username': email,
-
         'role': 'Driver',
-
         'dealerId': null,
         'vehicleId': null,
-
         'fullName': fullName,
         'phoneNumber': phone,
-
         'drivingLicenseNumber': "",
-
         'status': 'pending',
         'isProfileComplete': false,
         'isApproved': false,
-
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
     }
 
     return user;
+  }
+
+  // Reset Password
+  Future<void> resetPassword(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      switch (e.code) {
+        case 'invalid-email':
+          throw Exception("Invalid email format");
+        case 'user-not-found':
+          throw Exception("No account found with this email");
+        case 'too-many-requests':
+          throw Exception("Too many attempts. Try again later");
+        default:
+          throw Exception("Something went wrong");
+      }
+    }
   }
 
   // Logout
