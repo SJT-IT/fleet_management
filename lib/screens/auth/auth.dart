@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:fleet_management/provider/auth_provider.dart';
 import 'package:fleet_management/screens/auth/forgot_password.dart';
@@ -12,22 +13,26 @@ class AuthPage extends StatefulWidget {
 }
 
 class _AuthPageState extends State<AuthPage> {
-  // Flag to determine whether we're in login or signup mode
   bool isLogin = true;
 
-  // Controllers for text input fields
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
 
-  // Key for validating the form
+  // NEW: Password visibility states
+  bool _isPasswordHidden = true;
+  bool _isConfirmPasswordHidden = true;
+
+  // Regex
+  final phoneRegex = RegExp(r'^[6-9]\d{9}$');
+  final passwordRegex = RegExp(r'^(?=.*[A-Z])(?=.*[!@#$&*~]).{6,14}$');
+
   final _formKey = GlobalKey<FormState>();
 
   @override
   void dispose() {
-    // Dispose controllers when widget is removed to free resources
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -36,21 +41,17 @@ class _AuthPageState extends State<AuthPage> {
     super.dispose();
   }
 
-  // Handles login/signup submission
   void _submit() async {
-    // Validate form first
     if (!_formKey.currentState!.validate()) return;
 
     final auth = context.read<AppAuthProvider>();
 
     if (isLogin) {
-      // Call login method from provider
       await auth.login(
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );
     } else {
-      // Call signup method from provider
       await auth.signup(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
@@ -60,7 +61,6 @@ class _AuthPageState extends State<AuthPage> {
       );
     }
 
-    // Show error if authentication fails
     if (auth.error != null && mounted) {
       ScaffoldMessenger.of(
         context,
@@ -79,9 +79,7 @@ class _AuthPageState extends State<AuthPage> {
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Stack(
             children: [
-              // Main card with form
               _buildCard(),
-              // Show loading overlay if provider is busy
               if (auth.isLoading)
                 const Positioned.fill(
                   child: ColoredBox(
@@ -96,7 +94,6 @@ class _AuthPageState extends State<AuthPage> {
     );
   }
 
-  // Builds the card containing login/signup forms
   Widget _buildCard() {
     return Container(
       width: 400,
@@ -118,9 +115,8 @@ class _AuthPageState extends State<AuthPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildToggle(), // Login/Sign Up toggle
+            _buildToggle(),
             const SizedBox(height: 30),
-            // AnimatedSwitcher to smoothly switch between forms
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 400),
               child: isLogin ? _loginForm() : _signupForm(),
@@ -131,7 +127,6 @@ class _AuthPageState extends State<AuthPage> {
     );
   }
 
-  // Builds the toggle buttons for login/signup
   Widget _buildToggle() {
     return Container(
       padding: const EdgeInsets.all(4),
@@ -148,7 +143,6 @@ class _AuthPageState extends State<AuthPage> {
     );
   }
 
-  // Single toggle button
   Widget _toggleButton(String title, bool tabLogin) {
     bool active = isLogin == tabLogin;
 
@@ -176,7 +170,6 @@ class _AuthPageState extends State<AuthPage> {
     );
   }
 
-  // Login form layout
   Widget _loginForm() {
     return Column(
       key: const ValueKey("login"),
@@ -186,6 +179,12 @@ class _AuthPageState extends State<AuthPage> {
           label: "Email",
           icon: Icons.email_outlined,
           isDark: false,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return "Email is required";
+            }
+            return null;
+          },
         ),
         const SizedBox(height: 20),
         _inputField(
@@ -194,13 +193,22 @@ class _AuthPageState extends State<AuthPage> {
           icon: Icons.lock_outline,
           isPassword: true,
           isDark: false,
+          isObscured: _isPasswordHidden,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return "Password is required";
+            }
+            return null;
+          },
+          toggleVisibility: () {
+            setState(() => _isPasswordHidden = !_isPasswordHidden);
+          },
         ),
         const SizedBox(height: 10),
         Align(
           alignment: Alignment.centerRight,
           child: TextButton(
             onPressed: () {
-              // Navigate to Forgot Password page
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -216,12 +224,11 @@ class _AuthPageState extends State<AuthPage> {
           ),
         ),
         const SizedBox(height: 10),
-        _mainButton("SIGN IN"), // Main login button
+        _mainButton("SIGN IN"),
       ],
     );
   }
 
-  // Sign-up form layout
   Widget _signupForm() {
     return Column(
       key: const ValueKey("signup"),
@@ -231,6 +238,12 @@ class _AuthPageState extends State<AuthPage> {
           label: "Full Name",
           icon: Icons.person,
           isDark: false,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return "Name is required";
+            }
+            return null;
+          },
         ),
         const SizedBox(height: 20),
         _inputField(
@@ -238,6 +251,20 @@ class _AuthPageState extends State<AuthPage> {
           label: "Phone Number",
           icon: Icons.phone,
           isDark: false,
+          keyboardType: TextInputType.phone,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly, // only numbers allowed
+            LengthLimitingTextInputFormatter(11), // limit to 11 digits (India)
+          ],
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return "Phone number is required";
+            }
+            if (value.length < 10 || value.length > 11) {
+              return "Enter valid phone number";
+            }
+            return null;
+          },
         ),
         const SizedBox(height: 20),
         _inputField(
@@ -245,6 +272,12 @@ class _AuthPageState extends State<AuthPage> {
           label: "Email",
           icon: Icons.email_outlined,
           isDark: false,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return "Email is required";
+            }
+            return null;
+          },
         ),
         const SizedBox(height: 20),
         _inputField(
@@ -253,6 +286,19 @@ class _AuthPageState extends State<AuthPage> {
           icon: Icons.lock_outline,
           isPassword: true,
           isDark: false,
+          isObscured: _isPasswordHidden,
+          toggleVisibility: () {
+            setState(() => _isPasswordHidden = !_isPasswordHidden);
+          },
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return "Password is required";
+            }
+            if (!passwordRegex.hasMatch(value)) {
+              return "6-14 chars, 1 uppercase & 1 symbol required";
+            }
+            return null;
+          },
         ),
         const SizedBox(height: 20),
         _inputField(
@@ -261,24 +307,44 @@ class _AuthPageState extends State<AuthPage> {
           icon: Icons.check_circle_outline,
           isPassword: true,
           isDark: false,
+          isObscured: _isConfirmPasswordHidden,
+          toggleVisibility: () {
+            setState(
+              () => _isConfirmPasswordHidden = !_isConfirmPasswordHidden,
+            );
+          },
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return "Confirm your password";
+            }
+            if (value != _passwordController.text) {
+              return "Passwords do not match";
+            }
+            return null;
+          },
         ),
         const SizedBox(height: 25),
-        _mainButton("GET STARTED"), // Main signup button
+        _mainButton("GET STARTED"),
       ],
     );
   }
 
-  // Input field widget with styling
   Widget _inputField({
     required TextEditingController controller,
     required String label,
     required IconData icon,
     bool isPassword = false,
     required bool isDark,
+    String? Function(String?)? validator,
+    bool isObscured = false,
+    VoidCallback? toggleVisibility,
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return TextFormField(
       controller: controller,
-      obscureText: isPassword,
+      obscureText: isPassword ? isObscured : false,
+      validator: validator,
       style: TextStyle(
         color: isDark ? const Color(0xFFF9FAFB) : const Color(0xFF111827),
       ),
@@ -287,6 +353,15 @@ class _AuthPageState extends State<AuthPage> {
           icon,
           color: isDark ? Colors.white60 : const Color(0xFF6B7280),
         ),
+        suffixIcon: isPassword
+            ? IconButton(
+                icon: Icon(
+                  isObscured ? Icons.visibility_off : Icons.visibility,
+                  color: const Color(0xFF6B7280),
+                ),
+                onPressed: toggleVisibility,
+              )
+            : null,
         labelText: label,
         labelStyle: TextStyle(
           color: isDark ? Colors.white60 : const Color(0xFF6B7280),
@@ -307,13 +382,12 @@ class _AuthPageState extends State<AuthPage> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(color: const Color(0xFF22C55E)),
+          borderSide: const BorderSide(color: Color(0xFF22C55E)),
         ),
       ),
     );
   }
 
-  // Main login/signup button with loading state
   Widget _mainButton(String text) {
     return Consumer<AppAuthProvider>(
       builder: (context, auth, child) {
@@ -332,7 +406,7 @@ class _AuthPageState extends State<AuthPage> {
             ],
           ),
           child: ElevatedButton(
-            onPressed: auth.isLoading ? null : _submit, // Disable when loading
+            onPressed: auth.isLoading ? null : _submit,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.transparent,
               shadowColor: Colors.transparent,
