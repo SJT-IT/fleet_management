@@ -11,8 +11,38 @@ class AppAuthProvider extends ChangeNotifier {
   String? error;
   String? successMessage;
   String? currentUserRole;
+  User? user;
 
-  // Generic helper to handle async actions with loading & error handling
+  // CONSTRUCTOR → Initialize auth listener
+  AppAuthProvider() {
+    _initAuthListener();
+  }
+
+  // LISTEN TO FIREBASE AUTH STATE
+  void _initAuthListener() {
+    FirebaseAuth.instance.authStateChanges().listen((firebaseUser) async {
+      user = firebaseUser;
+
+      if (user != null) {
+        try {
+          currentUserRole = await _userRepo.getUserRole(user!.uid);
+
+          if (currentUserRole == null) {
+            await _authService.logout();
+            user = null;
+            error = "You are not registered with us";
+          }
+        } catch (e) {
+          error = "Failed to fetch user role";
+        }
+      } else {
+        currentUserRole = null;
+      }
+
+      notifyListeners();
+    });
+  }
+
   Future<void> _executeAsync(Future<void> Function() action) async {
     try {
       isLoading = true;
@@ -33,43 +63,21 @@ class AppAuthProvider extends ChangeNotifier {
     }
   }
 
-  // Email validation
-  String? _validateEmail(String email) {
-    if (email.isEmpty) return "Email is required";
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-    if (!emailRegex.hasMatch(email)) return "Enter a valid email";
-    return null;
-  }
-
-  // Phone validation
-  String? _validatePhone(String phone) {
-    if (phone.isEmpty) return "Phone number is required";
-    final phoneRegex = RegExp(r'^\d{10}$'); // exactly 10 digits
-    if (!phoneRegex.hasMatch(phone)) {
-      return "Enter a valid 10-digit phone number";
-    }
-    return null;
-  }
-
-  // Login
+  // LOGIN (simplified)
   Future<void> login(String email, String password) async {
     await _executeAsync(() async {
-      final user = await _authService.login(email, password);
+      final loggedInUser = await _authService.login(email, password);
 
-      if (user != null) {
-        currentUserRole = await _userRepo.getUserRole(user.uid);
-
-        if (currentUserRole == null) {
-          error = "You are not registered with us";
-          await _authService.logout();
-        }
-      } else {
-        error = "Login failed";
+      if (loggedInUser == null) {
+        throw Exception("Login failed");
       }
+
+      // ❌ DO NOT set user or role here
+      // Listener will handle it automatically
     });
   }
 
-  // Signup with email & phone validation
+  // Signup
   Future<void> signup({
     required String email,
     required String password,
@@ -77,46 +85,29 @@ class AppAuthProvider extends ChangeNotifier {
     required String name,
     required String phone,
   }) async {
-    // Password match check
     if (password != confirmPassword) {
-      error = "Passwords do not match";
-      notifyListeners();
-      return;
+      throw Exception("Passwords do not match");
     }
 
-    // Email validation
-    final emailError = _validateEmail(email);
-    if (emailError != null) {
-      error = emailError;
-      notifyListeners();
-      return;
-    }
-
-    // Phone validation
-    final phoneError = _validatePhone(phone);
-    if (phoneError != null) {
-      error = phoneError;
-      notifyListeners();
-      return;
-    }
-
-    // Execute Firebase signup
     await _executeAsync(() async {
-      final user = await _authService.signup(
+      final newUser = await _authService.signup(
         email,
         password,
         fullName: name,
         phone: phone,
       );
 
-      if (user != null) {
-        currentUserRole = await _userRepo.getUserRole(user.uid);
-        successMessage = "Account created successfully";
+      if (newUser == null) {
+        throw Exception("Signup failed");
       }
+
+      successMessage = "Account created successfully";
+
+      // Listener will handle user + role
     });
   }
 
-  // Reset Password
+  // RESET PASSWORD
   Future<void> resetPassword(String email) async {
     await _executeAsync(() async {
       await _authService.resetPassword(email);
@@ -124,14 +115,16 @@ class AppAuthProvider extends ChangeNotifier {
     });
   }
 
-  // Logout
+  // LOGOUT
   Future<void> logout() async {
-    await _authService.logout();
-    currentUserRole = null;
-    notifyListeners();
+    await _executeAsync(() async {
+      await _authService.logout();
+      user = null;
+      currentUserRole = null;
+    });
   }
 
-  // PRIVATE HELPER: FRIENDLY ERROR MESSAGES
+  // FRIENDLY ERRORS
   String _getFriendlyError(FirebaseAuthException e) {
     switch (e.code) {
       case 'invalid-email':

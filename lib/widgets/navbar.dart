@@ -32,7 +32,7 @@ class AppNavbar extends StatelessWidget {
         NavigationDestination(
           icon: Icon(Icons.speed_outlined),
           selectedIcon: Icon(Icons.speed),
-          label: "Odometer",
+          label: "Stats",
         ),
         NavigationDestination(
           icon: Icon(Icons.person_outline),

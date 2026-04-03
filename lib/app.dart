@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fleet_management/provider/auth_provider.dart';
@@ -36,7 +35,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AppAuthProvider>();
-    final user = FirebaseAuth.instance.currentUser;
+    final user = auth.user;
 
     // Show spinner if loading
     if (auth.isLoading) {
