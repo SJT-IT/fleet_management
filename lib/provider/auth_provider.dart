@@ -13,36 +13,46 @@ class AppAuthProvider extends ChangeNotifier {
   String? currentUserRole;
   User? user;
 
-  // CONSTRUCTOR → Initialize auth listener
+  // Private flag to prevent listener conflicts during logout
+  final bool _isLoggingOut = false;
+
+  // ------------------ Constructor ------------------
   AppAuthProvider() {
     _initAuthListener();
   }
 
-  // LISTEN TO FIREBASE AUTH STATE
+  // ------------------ Auth State Listener ------------------
   void _initAuthListener() {
     FirebaseAuth.instance.authStateChanges().listen((firebaseUser) async {
+      // Ignore changes while logging out
+      if (_isLoggingOut) return;
+
       user = firebaseUser;
 
       if (user != null) {
         try {
-          currentUserRole = await _userRepo.getUserRole(user!.uid);
-
-          if (currentUserRole == null) {
-            await _authService.logout();
-            user = null;
-            error = "You are not registered with us";
+          final role = await _userRepo.getUserRole(user!.uid);
+          if (role != null) {
+            currentUserRole = role;
+            error = null; // clear previous errors
+          } else {
+            currentUserRole = null;
+            error = null; // do NOT force logout if role missing
           }
         } catch (e) {
-          error = "Failed to fetch user role";
+          currentUserRole = null;
+          error = null; // do NOT force logout if fetch fails
         }
       } else {
         currentUserRole = null;
+        error = null;
       }
 
       notifyListeners();
     });
   }
 
+  // ------------------ Helper for async actions ------------------
   Future<void> _executeAsync(Future<void> Function() action) async {
     try {
       isLoading = true;
@@ -63,21 +73,18 @@ class AppAuthProvider extends ChangeNotifier {
     }
   }
 
-  // LOGIN (simplified)
+  // ------------------ LOGIN ------------------
   Future<void> login(String email, String password) async {
     await _executeAsync(() async {
       final loggedInUser = await _authService.login(email, password);
-
       if (loggedInUser == null) {
         throw Exception("Login failed");
       }
-
-      // ❌ DO NOT set user or role here
-      // Listener will handle it automatically
+      // ❌ user & role will be set by listener
     });
   }
 
-  // Signup
+  // ------------------ SIGNUP ------------------
   Future<void> signup({
     required String email,
     required String password,
@@ -102,12 +109,11 @@ class AppAuthProvider extends ChangeNotifier {
       }
 
       successMessage = "Account created successfully";
-
       // Listener will handle user + role
     });
   }
 
-  // RESET PASSWORD
+  // ------------------ RESET PASSWORD ------------------
   Future<void> resetPassword(String email) async {
     await _executeAsync(() async {
       await _authService.resetPassword(email);
@@ -115,16 +121,28 @@ class AppAuthProvider extends ChangeNotifier {
     });
   }
 
-  // LOGOUT
+  // ------------------ LOGOUT ------------------
   Future<void> logout() async {
-    await _executeAsync(() async {
-      await _authService.logout();
-      user = null;
-      currentUserRole = null;
-    });
+    isLoading = true;
+    notifyListeners();
+
+    // Clear local provider state immediately
+    user = null;
+    currentUserRole = null;
+    error = null;
+    successMessage = null;
+
+    try {
+      await _authService.logout(); // sign out from Firebase
+    } catch (e) {
+      error = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 
-  // FRIENDLY ERRORS
+  // ------------------ Friendly Firebase Errors ------------------
   String _getFriendlyError(FirebaseAuthException e) {
     switch (e.code) {
       case 'invalid-email':

@@ -1,9 +1,10 @@
+import 'package:fleet_management/provider/auth_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fleet_management/widgets/navbar.dart';
 import 'package:fleet_management/screens/roles/admin/admin_search.dart';
 import 'package:fleet_management/screens/roles/admin/admin_odo.dart';
 import 'package:fleet_management/screens/roles/admin/admin_profile.dart';
+import 'package:provider/provider.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
@@ -15,35 +16,23 @@ class AdminScreen extends StatefulWidget {
 class _AdminScreenState extends State<AdminScreen> {
   int _currentIndex = 0;
 
-  Future<void> _logout() async {
-    await FirebaseAuth.instance.signOut();
-  }
-
   void _onNavTap(int index) {
     setState(() => _currentIndex = index);
   }
 
-  // 👇 Pages for each tab
+  // Pages for each tab
   late final List<Widget> _pages = [
-    const AdminHomeContent(),
-    const AdminSearchScreen(),
-    const AdminOdoScreen(),
-    const AdminProfileScreen(),
+    const AdminHomeContent(), // Home tab
+    const AdminSearchScreen(), // Search tab
+    const AdminOdoScreen(), // Odometer tab
+    const AdminProfileScreen(), // Profile tab (logout lives here)
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Fleet Management"),
-        actions: [
-          IconButton(onPressed: _logout, icon: const Icon(Icons.logout)),
-        ],
-      ),
-
-      // Switch content instead of navigating
+      // AppBar removed from scaffold because each page can handle its own SliverAppBar
       body: _pages[_currentIndex],
-
       bottomNavigationBar: AppNavbar(
         currentIndex: _currentIndex,
         onTap: _onNavTap,
@@ -52,33 +41,68 @@ class _AdminScreenState extends State<AdminScreen> {
   }
 }
 
-//  Extracted Home Content (your original body)
+// ----------------- Home Content with Collapsible Header -----------------
 class AdminHomeContent extends StatelessWidget {
   const AdminHomeContent({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
+    // Use provider, not FirebaseAuth directly
+    final auth = context.watch<AppAuthProvider>();
+    final userEmail = auth.user?.email ?? "Admin";
 
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text(
-            "Welcome Admin Home Screen",
-            style: TextStyle(fontSize: 24),
+    return CustomScrollView(
+      slivers: [
+        SliverAppBar(
+          expandedHeight: 160,
+          pinned: true,
+          floating: true,
+          flexibleSpace: FlexibleSpaceBar(
+            title: const Text("Fleet Dashboard"),
+            background: Container(
+              color: Colors.blueAccent,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Welcome, $userEmail",
+                      style: const TextStyle(color: Colors.white, fontSize: 18),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      "Your fleet overview",
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-          const SizedBox(height: 10),
-          Text(user?.email ?? "No Email"),
-          const SizedBox(height: 30),
-          ElevatedButton(
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-            },
-            child: const Text("Logout"),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: const Text(
+              "Fleet Vehicles",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
           ),
-        ],
-      ),
+        ),
+        SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) => Card(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: ListTile(
+                leading: const Icon(Icons.directions_car),
+                title: Text("Vehicle $index"),
+                subtitle: const Text("Status: Active"),
+              ),
+            ),
+            childCount: 10,
+          ),
+        ),
+      ],
     );
   }
 }
