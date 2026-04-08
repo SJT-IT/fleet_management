@@ -3,11 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class AdminOdoScreen extends StatelessWidget {
   const AdminOdoScreen({super.key});
-
-  Future<void> _logout() async {
-    await FirebaseAuth.instance.signOut();
-  }
-
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
@@ -23,7 +18,6 @@ class AdminOdoScreen extends StatelessWidget {
           const SizedBox(height: 10),
           Text(user?.email ?? "No Email"),
           const SizedBox(height: 30),
-          ElevatedButton(onPressed: _logout, child: const Text("Logout")),
         ],
       ),
     );

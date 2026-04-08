@@ -25,7 +25,7 @@ class _AdminScreenState extends State<AdminScreen> {
     const AdminHomeContent(), // Home tab
     const AdminSearchScreen(), // Search tab
     const AdminOdoScreen(), // Odometer tab
-    const AdminProfileScreen(), // Profile tab (logout lives here)
+    const AdminProfileScreen(), // Profile tab
   ];
 
   @override
