@@ -1,4 +1,8 @@
 import 'package:fleet_management/provider/auth_provider.dart';
+import 'package:fleet_management/shared/screens/contact_us.dart';
+import 'package:fleet_management/shared/screens/get_help.dart';
+import 'package:fleet_management/shared/screens/privacy_policy.dart';
+import 'package:fleet_management/shared/screens/terms_and_conditions.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
@@ -81,7 +85,6 @@ class DriverProfileScreen extends StatelessWidget {
                 leading: const CircleAvatar(child: Icon(Icons.person)),
                 title: const Text("Driver"),
                 subtitle: Text(user?.email ?? "No Email"),
-                trailing: const Icon(Icons.edit),
               ),
             ),
 
@@ -123,25 +126,57 @@ class DriverProfileScreen extends StatelessWidget {
             // =======================
             Card(
               child: Column(
-                children: const [
+                children: [
                   ListTile(
                     leading: Icon(Icons.phone),
                     title: Text("Contact Us"),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ContactUsScreen(),
+                        ),
+                      );
+                    },
                   ),
                   Divider(),
                   ListTile(
                     leading: Icon(Icons.description),
                     title: Text("Terms & Conditions"),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => TermsConditionsScreen(),
+                        ),
+                      );
+                    },
                   ),
                   Divider(),
                   ListTile(
                     leading: Icon(Icons.lock),
                     title: Text("Privacy Policy"),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PrivacyPolicyScreen(),
+                        ),
+                      );
+                    },
                   ),
                   Divider(),
                   ListTile(
                     leading: Icon(Icons.help_outline),
                     title: Text("Get Help"),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => GetHelpScreen(),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),

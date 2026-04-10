@@ -1,6 +1,6 @@
 import 'package:fleet_management/provider/auth_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:fleet_management/widgets/navbar.dart';
+import 'package:fleet_management/shared/widgets/navbar.dart';
 import 'package:fleet_management/screens/roles/admin/admin_search.dart';
 import 'package:fleet_management/screens/roles/admin/admin_odo.dart';
 import 'package:fleet_management/screens/roles/admin/admin_profile.dart';

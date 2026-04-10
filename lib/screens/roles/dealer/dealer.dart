@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:fleet_management/widgets/navbar.dart';
+import 'package:fleet_management/shared/widgets/navbar.dart';
 import 'package:fleet_management/provider/auth_provider.dart';
 import 'package:fleet_management/screens/roles/dealer/dealer_odo.dart';
 import 'package:fleet_management/screens/roles/dealer/dealer_profile.dart';
