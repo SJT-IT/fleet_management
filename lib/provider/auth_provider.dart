@@ -13,9 +13,6 @@ class AppAuthProvider extends ChangeNotifier {
   String? currentUserRole;
   User? user;
 
-  // Private flag to prevent listener conflicts during logout
-  final bool _isLoggingOut = false;
-
   // ------------------ Constructor ------------------
   AppAuthProvider() {
     _initAuthListener();
@@ -24,29 +21,27 @@ class AppAuthProvider extends ChangeNotifier {
   // ------------------ Auth State Listener ------------------
   void _initAuthListener() {
     FirebaseAuth.instance.authStateChanges().listen((firebaseUser) async {
-      // Ignore changes while logging out
-      if (_isLoggingOut) return;
-
       user = firebaseUser;
 
       if (user != null) {
         try {
-          final role = await _userRepo.getUserRole(user!.uid);
-          if (role != null) {
-            currentUserRole = role;
-            error = null; // clear previous errors
-          } else {
-            currentUserRole = null;
-            error = null; // do NOT force logout if role missing
+          final fetchedRole = await _userRepo.getUserRole(user!.uid);
+
+          // Prevent async race condition
+          if (FirebaseAuth.instance.currentUser?.uid == user?.uid) {
+            currentUserRole = fetchedRole;
           }
         } catch (e) {
           currentUserRole = null;
-          error = null; // do NOT force logout if fetch fails
         }
       } else {
         currentUserRole = null;
-        error = null;
       }
+
+      // Reset UI states on auth change
+      isLoading = false;
+      error = null;
+      successMessage = null;
 
       notifyListeners();
     });
@@ -67,10 +62,11 @@ class AppAuthProvider extends ChangeNotifier {
       } else {
         error = e.toString();
       }
-    } finally {
-      isLoading = false;
+
+      isLoading = false; // Only stop loading on error
       notifyListeners();
     }
+    // ❗ No finally block → listener handles success case
   }
 
   // ------------------ LOGIN ------------------
@@ -80,7 +76,7 @@ class AppAuthProvider extends ChangeNotifier {
       if (loggedInUser == null) {
         throw Exception("Login failed");
       }
-      // ❌ user & role will be set by listener
+      // Listener will handle user + role
     });
   }
 
@@ -93,7 +89,9 @@ class AppAuthProvider extends ChangeNotifier {
     required String phone,
   }) async {
     if (password != confirmPassword) {
-      throw Exception("Passwords do not match");
+      error = "Passwords do not match";
+      notifyListeners();
+      return;
     }
 
     await _executeAsync(() async {
@@ -119,24 +117,21 @@ class AppAuthProvider extends ChangeNotifier {
       await _authService.resetPassword(email);
       successMessage = "Password reset link sent to your email";
     });
+
+    // Reset loading manually since no auth change occurs
+    isLoading = false;
+    notifyListeners();
   }
 
   // ------------------ LOGOUT ------------------
   Future<void> logout() async {
-    isLoading = true;
-    notifyListeners();
-
-    // Clear local provider state immediately
-    user = null;
-    currentUserRole = null;
-    error = null;
-    successMessage = null;
-
     try {
-      await _authService.logout(); // sign out from Firebase
+      isLoading = true;
+      notifyListeners();
+
+      await _authService.logout(); // Listener will handle cleanup
     } catch (e) {
       error = e.toString();
-    } finally {
       isLoading = false;
       notifyListeners();
     }
