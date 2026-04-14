@@ -1,22 +1,46 @@
+import 'package:fleet_management/shared/screens/odo_ui.dart';
 import 'package:flutter/material.dart';
-import 'vehicle_list_screen.dart';
 
-class AdminOdoScreen extends StatelessWidget {
-  const AdminOdoScreen({super.key});
+class VehicleListScreen extends StatelessWidget {
+  final String dealerId;
+  final String dealerName;
 
-  final List<Map<String, String>> dealers = const [
-    {"id": "d1", "name": "Metro Motors", "status": "Active"},
-    {"id": "d2", "name": "City Fleet Services", "status": "Closed"},
-    {"id": "d3", "name": "Prime Auto Dealers", "status": "Maintenance"},
-  ];
+  const VehicleListScreen({
+    super.key,
+    required this.dealerId,
+    required this.dealerName,
+  });
+
+  List<Map<String, String>> getVehicles(String dealerId) {
+    return [
+      {
+        "id": "v1",
+        "name": "Tesla Model X",
+        "driver": "John",
+        "status": "Running",
+      },
+      {
+        "id": "v2",
+        "name": "BYD Atto 3",
+        "driver": "Mike",
+        "status": "Maintenance",
+      },
+      {
+        "id": "v3",
+        "name": "Tata Nexon EV",
+        "driver": "Sara",
+        "status": "Retired",
+      },
+    ];
+  }
 
   Color _statusColor(String status) {
     switch (status) {
-      case "Active":
+      case "Running":
         return Colors.green;
       case "Maintenance":
         return Colors.orange;
-      case "Closed":
+      case "Retired":
         return Colors.red;
       default:
         return Colors.grey;
@@ -25,23 +49,24 @@ class AdminOdoScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final vehicles = getVehicles(dealerId);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        title: const Text(
-          "Dealers List",
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          dealerName,
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
-        elevation: 0,
         backgroundColor: Colors.blueAccent,
       ),
       body: ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: dealers.length,
+        itemCount: vehicles.length,
         itemBuilder: (context, index) {
-          final dealer = dealers[index];
-          final statusColor = _statusColor(dealer["status"]!);
+          final v = vehicles[index];
+          final statusColor = _statusColor(v["status"]!);
 
           return Container(
             margin: const EdgeInsets.only(bottom: 14),
@@ -64,11 +89,14 @@ class AdminOdoScreen extends StatelessWidget {
 
               leading: CircleAvatar(
                 backgroundColor: Colors.blueAccent.withAlpha(25),
-                child: const Icon(Icons.business, color: Colors.blueAccent),
+                child: const Icon(
+                  Icons.directions_car,
+                  color: Colors.blueAccent,
+                ),
               ),
 
               title: Text(
-                dealer["name"]!,
+                v["name"]!,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -89,7 +117,7 @@ class AdminOdoScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        dealer["status"]!,
+                        v["status"]!,
                         style: TextStyle(
                           fontSize: 12,
                           color: statusColor,
@@ -99,7 +127,7 @@ class AdminOdoScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: 10),
                     Text(
-                      "Dealer ID: ${dealer["id"]}",
+                      "Driver: ${v["driver"]}",
                       style: const TextStyle(fontSize: 12),
                     ),
                   ],
@@ -116,9 +144,21 @@ class AdminOdoScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => VehicleListScreen(
-                      dealerId: dealer["id"]!,
-                      dealerName: dealer["name"]!,
+                    builder: (_) => OdoUIScreen(
+                      vehicleId: v["id"]!,
+                      speed: 45,
+                      alarm: "no alarm",
+                      soc: "100",
+                      voltage: "99",
+                      temp: "35",
+                      current: "10",
+                      odometer: "1200",
+                      latitude: "18.5204",
+                      longitude: "73.8567",
+                      timestamp: DateTime.now().toString(),
+                      sliderValue: 5,
+                      maxSlider: 10,
+                      onSliderChanged: (v) {},
                     ),
                   ),
                 );

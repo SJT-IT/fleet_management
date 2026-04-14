@@ -1,8 +1,8 @@
+import 'package:fleet_management/shared/screens/odo_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fleet_management/shared/widgets/navbar.dart';
 import 'package:fleet_management/provider/auth_provider.dart';
-import 'package:fleet_management/screens/roles/driver/driver_odo.dart';
 import 'package:fleet_management/screens/roles/driver/driver_profile.dart';
 import 'package:fleet_management/screens/roles/driver/driver_search.dart';
 
@@ -24,7 +24,22 @@ class _DriverScreenState extends State<DriverScreen> {
   late final List<Widget> _pages = [
     const DriverHomeContent(), // Home tab
     const DriverSearchScreen(), // Search tab
-    const DriverOdoScreen(), // Odometer tab
+    OdoUIScreen(
+      vehicleId: "abc123",
+      speed: 48,
+      alarm: 'no alarm',
+      soc: '100',
+      voltage: '99',
+      temp: '98',
+      current: '97',
+      odometer: '96',
+      latitude: '95',
+      longitude: '94',
+      timestamp: '2025-03-10 11:04:00',
+      sliderValue: 10,
+      maxSlider: 10,
+      onSliderChanged: (double value) {},
+    ), // Odometer tab
     const DriverProfileScreen(), // Profile tab
   ];
 
