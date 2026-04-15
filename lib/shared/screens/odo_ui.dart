@@ -1,6 +1,8 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
-class OdoUIScreen extends StatelessWidget {
+class OdoUIScreen extends StatefulWidget {
   final double speed;
   final String alarm;
   final String soc;
@@ -16,6 +18,8 @@ class OdoUIScreen extends StatelessWidget {
   final double maxSlider;
   final ValueChanged<double> onSliderChanged;
 
+  final String vehicleId;
+
   const OdoUIScreen({
     super.key,
     required this.speed,
@@ -30,29 +34,151 @@ class OdoUIScreen extends StatelessWidget {
     required this.timestamp,
     required this.sliderValue,
     required this.maxSlider,
-    required this.onSliderChanged, required String vehicleId,
+    required this.onSliderChanged,
+    required this.vehicleId,
   });
+
+  @override
+  State<OdoUIScreen> createState() => _OdoUIScreenState();
+}
+
+class _OdoUIScreenState extends State<OdoUIScreen> {
+  final PageController _controller = PageController(initialPage: 1);
+  int currentPage = 1;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
-      appBar: AppBar(
-        title: const Text(
-          "BMS Dashboard",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-      ),
       body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _mainCard(context),
-          const SizedBox(height: 40),
-          _sliderSection(),
-          const SizedBox(height: 40),
+          _topPillNav(),
+
+          Expanded(
+            child: PageView(
+              controller: _controller,
+              onPageChanged: (index) {
+                setState(() {
+                  currentPage = index;
+                });
+              },
+              children: [_historyPage(), _livePage(), _alarmPage()],
+            ),
+          ),
         ],
       ),
+    );
+  }
+
+  // ---------------- PILL ----------------
+  Widget _topPillNav() {
+    final labels = ["HISTORY", "LIVE", "ALARMS"];
+
+    return SafeArea(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade200,
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final segmentWidth = constraints.maxWidth / labels.length;
+
+            return Stack(
+              children: [
+                // MOVING BUBBLE (PIXEL CONTROLLED)
+                AnimatedPositioned(
+                  duration: const Duration(milliseconds: 150),
+                  // IMPORTANT: no duration → we follow finger smoothly
+                  left: lerpDouble(
+                    (currentPage.floor() * segmentWidth),
+                    (currentPage.ceil() * segmentWidth),
+                    (currentPage - currentPage.floor()) as double,
+                  )!,
+                  child: Container(
+                    width: segmentWidth,
+                    height: 40,
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: const Color.fromARGB(255, 220, 220, 220),
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // LABELS
+                Row(
+                  children: List.generate(labels.length, (index) {
+                    final isSelected = (currentPage.round() == index);
+
+                    return Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          _controller.animateToPage(
+                            index,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeOutCubic,
+                          );
+                        },
+                        child: Container(
+                          height: 40,
+                          alignment: Alignment.center,
+                          child: Text(
+                            labels[index],
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: isSelected
+                                  ? const Color.fromARGB(255, 45, 182, 255)
+                                  : const Color.fromARGB(255, 163, 163, 163),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  // ---------------- PAGES ----------------
+
+  Widget _livePage() {
+    return _buildBaseUI(showSlider: false);
+  }
+
+  Widget _historyPage() {
+    return _buildBaseUI(showSlider: true);
+  }
+
+  Widget _alarmPage() {
+    return const Center(
+      child: Text(
+        "ALARM LIST PAGE",
+        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  // ---------------- CORE UI ----------------
+
+  Widget _buildBaseUI({required bool showSlider}) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _mainCard(context),
+        const SizedBox(height: 30),
+        if (showSlider) _sliderSection(),
+        const SizedBox(height: 30),
+      ],
     );
   }
 
@@ -92,20 +218,13 @@ class OdoUIScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              speed.toStringAsFixed(1),
-              style: const TextStyle(
-                fontSize: 48,
-                fontWeight: FontWeight.bold,
-                letterSpacing: -1,
-              ),
+              widget.speed.toStringAsFixed(1),
+              style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
             ),
-            const Text(
-              "km/h",
-              style: TextStyle(color: Colors.grey, fontSize: 14),
-            ),
+            const Text("km/h", style: TextStyle(color: Colors.grey)),
           ],
         ),
-        _alarmChip(alarm),
+        _alarmChip(widget.alarm),
       ],
     );
   }
@@ -114,9 +233,14 @@ class OdoUIScreen extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        _statCircle(Icons.battery_charging_full, soc, "SOC", Colors.green),
-        _statCircle(Icons.bolt, voltage, "Voltage", Colors.orange),
-        _statCircle(Icons.thermostat, temp, "Temp", Colors.redAccent),
+        _statCircle(
+          Icons.battery_charging_full,
+          widget.soc,
+          "SOC",
+          Colors.green,
+        ),
+        _statCircle(Icons.bolt, widget.voltage, "Voltage", Colors.orange),
+        _statCircle(Icons.thermostat, widget.temp, "Temp", Colors.red),
       ],
     );
   }
@@ -125,10 +249,10 @@ class OdoUIScreen extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _detailRow(Icons.electric_moped, "Current", current),
-        _detailRow(Icons.history, "Odometer", odometer),
-        _detailRow(Icons.location_on, "Latitude", latitude),
-        _detailRow(Icons.location_on_outlined, "Longitude", longitude),
+        _detailRow(Icons.electric_moped, "Current", widget.current),
+        _detailRow(Icons.history, "Odometer", widget.odometer),
+        _detailRow(Icons.location_on, "Latitude", widget.latitude),
+        _detailRow(Icons.location_on_outlined, "Longitude", widget.longitude),
       ],
     );
   }
@@ -141,16 +265,11 @@ class OdoUIScreen extends StatelessWidget {
         color: Colors.blueAccent.withAlpha(25),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.access_time, size: 18, color: Colors.blueAccent),
-          const SizedBox(width: 8),
-          Text(
-            timestamp,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-          ),
-        ],
+      child: Center(
+        child: Text(
+          widget.timestamp,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
       ),
     );
   }
@@ -161,26 +280,10 @@ class OdoUIScreen extends StatelessWidget {
       child: Column(
         children: [
           Slider(
-            value: sliderValue,
+            value: widget.sliderValue,
             min: 0,
-            max: maxSlider,
-            onChanged: onSliderChanged,
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
-                Text(
-                  "HISTORY",
-                  style: TextStyle(fontSize: 10, color: Colors.grey),
-                ),
-                Text(
-                  "LIVE DATA",
-                  style: TextStyle(fontSize: 10, color: Colors.blueAccent),
-                ),
-              ],
-            ),
+            max: widget.maxSlider,
+            onChanged: widget.onSliderChanged,
           ),
         ],
       ),
@@ -191,22 +294,19 @@ class OdoUIScreen extends StatelessWidget {
     return Column(
       children: [
         CircleAvatar(
-          backgroundColor: color.withAlpha(25),
-          radius: 20,
-          child: Icon(icon, color: color, size: 20),
+          backgroundColor: color.withAlpha(30),
+          child: Icon(icon, color: color),
         ),
-        const SizedBox(height: 6),
-        Text(
-          value,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+        const SizedBox(height: 5),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+        Text(label, style: const TextStyle(fontSize: 11)),
       ],
     );
   }
 
   Widget _alarmChip(String alarm) {
-    bool isWarning = alarm.toLowerCase() != "no alarm";
+    final isWarning = alarm.toLowerCase() != "no alarm";
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -218,7 +318,6 @@ class OdoUIScreen extends StatelessWidget {
         style: TextStyle(
           color: isWarning ? Colors.white : Colors.green,
           fontWeight: FontWeight.bold,
-          fontSize: 10,
         ),
       ),
     );
@@ -229,17 +328,11 @@ class OdoUIScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Icon(icon, size: 24, color: Colors.blueGrey),
-          const SizedBox(width: 12),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 16, color: Colors.black54),
-          ),
+          Icon(icon, color: Colors.blueGrey),
+          const SizedBox(width: 10),
+          Text(label),
           const Spacer(),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
     );
