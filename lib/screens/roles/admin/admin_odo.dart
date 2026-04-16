@@ -1,5 +1,5 @@
+import 'package:fleet_management/screens/roles/dealer/dealer_odo.dart';
 import 'package:flutter/material.dart';
-import 'vehicle_list_screen.dart';
 
 class AdminOdoScreen extends StatelessWidget {
   const AdminOdoScreen({super.key});
@@ -116,7 +116,7 @@ class AdminOdoScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => VehicleListScreen(
+                    builder: (_) => DealerOdoScreen(
                       dealerId: dealer["id"]!,
                       dealerName: dealer["name"]!,
                     ),

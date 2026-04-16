@@ -1,7 +1,15 @@
+import 'package:fleet_management/shared/screens/odo_ui.dart';
 import 'package:flutter/material.dart';
 
 class DealerOdoScreen extends StatelessWidget {
-  const DealerOdoScreen({super.key});
+  final String dealerId;
+  final String dealerName;
+
+  const DealerOdoScreen({
+    super.key,
+    required this.dealerId,
+    required this.dealerName,
+  });
 
   Color _statusColor(String status) {
     switch (status) {
@@ -40,7 +48,7 @@ class DealerOdoScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Dealer Vehicles"), centerTitle: true),
+      appBar: AppBar(title: Text(dealerName), centerTitle: true),
       body: ListView.builder(
         padding: const EdgeInsets.all(12),
         itemCount: vehicles.length,
@@ -56,7 +64,7 @@ class DealerOdoScreen extends StatelessWidget {
             ),
             child: ListTile(
               leading: CircleAvatar(
-                backgroundColor: color..withAlpha(40),
+                backgroundColor: color.withAlpha(40),
                 child: Icon(Icons.local_shipping, color: color),
               ),
               title: Text(
@@ -88,8 +96,33 @@ class DealerOdoScreen extends StatelessWidget {
                   ),
                 ),
               ),
+
+              // NAVIGATION TO ODO UI
               onTap: () {
-                // Later: navigate to VehicleDetailScreen(vehicleId)
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => OdoUIScreen(
+                      vehicleId: v["number"]!,
+
+                      // DUMMY DATA (slightly dynamic)
+                      speed: 30 + index * 10,
+                      alarm: index == 2 ? "Overheat" : "No Alarm",
+                      soc: "${70 + index * 5}%",
+                      voltage: "${48 + index}V",
+                      temp: "${30 + index * 2}°C",
+                      current: "${10 + index}A",
+                      odometer: "${1500 + index * 100} km",
+                      latitude: "18.5204",
+                      longitude: "73.8567",
+                      timestamp: "2026-04-16 12:${40 + index} PM",
+
+                      sliderValue: 0,
+                      maxSlider: 0,
+                      onSliderChanged: (value) {}, prevMonthDistance: null, currentMonthDistance: null, runningMonthDistance: null,
+                    ),
+                  ),
+                );
               },
             ),
           );

@@ -24,7 +24,7 @@ class _DealerScreenState extends State<DealerScreen> {
   late final List<Widget> _pages = [
     const DealerHomeContent(), // Home tab
     const DealerSearchScreen(), // Search tab
-    const DealerOdoScreen(), // Odometer tab
+    const DealerOdoScreen(dealerId: '', dealerName: '',), // Odometer tab
     const DealerProfileScreen(), // Profile tab
   ];
 

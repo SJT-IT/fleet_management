@@ -38,7 +38,7 @@ class _DriverScreenState extends State<DriverScreen> {
       timestamp: '2025-03-10 11:04:00',
       sliderValue: 10,
       maxSlider: 10,
-      onSliderChanged: (double value) {},
+      onSliderChanged: (double value) {}, prevMonthDistance: null, currentMonthDistance: null, runningMonthDistance: null,
     ), // Odometer tab
     const DriverProfileScreen(), // Profile tab
   ];

@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 class OdoUIScreen extends StatefulWidget {
@@ -20,6 +18,11 @@ class OdoUIScreen extends StatefulWidget {
 
   final String vehicleId;
 
+  // MONTHLY DATA
+  final double? prevMonthDistance;
+  final double? currentMonthDistance;
+  final double? runningMonthDistance;
+
   const OdoUIScreen({
     super.key,
     required this.speed,
@@ -36,6 +39,9 @@ class OdoUIScreen extends StatefulWidget {
     required this.maxSlider,
     required this.onSliderChanged,
     required this.vehicleId,
+    required this.prevMonthDistance,
+    required this.currentMonthDistance,
+    required this.runningMonthDistance,
   });
 
   @override
@@ -46,6 +52,8 @@ class _OdoUIScreenState extends State<OdoUIScreen> {
   final PageController _controller = PageController(initialPage: 1);
   int currentPage = 1;
 
+  final List<String> labels = ["HISTORY", "LIVE", "MONTHLY", "ALARMS"];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -53,16 +61,18 @@ class _OdoUIScreenState extends State<OdoUIScreen> {
       body: Column(
         children: [
           _topPillNav(),
-
           Expanded(
             child: PageView(
               controller: _controller,
               onPageChanged: (index) {
-                setState(() {
-                  currentPage = index;
-                });
+                setState(() => currentPage = index);
               },
-              children: [_historyPage(), _livePage(), _alarmPage()],
+              children: [
+                _buildPage(showSlider: true),
+                _buildPage(showSlider: false),
+                _monthlyPage(),
+                _alarmPage(),
+              ],
             ),
           ),
         ],
@@ -70,10 +80,8 @@ class _OdoUIScreenState extends State<OdoUIScreen> {
     );
   }
 
-  // ---------------- PILL ----------------
+  // ---------------- NAV ----------------
   Widget _topPillNav() {
-    final labels = ["HISTORY", "LIVE", "ALARMS"];
-
     return SafeArea(
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -84,56 +92,43 @@ class _OdoUIScreenState extends State<OdoUIScreen> {
         ),
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final segmentWidth = constraints.maxWidth / labels.length;
+            final w = constraints.maxWidth / labels.length;
 
             return Stack(
               children: [
-                // MOVING BUBBLE (PIXEL CONTROLLED)
                 AnimatedPositioned(
-                  duration: const Duration(milliseconds: 150),
-                  // IMPORTANT: no duration → we follow finger smoothly
-                  left: lerpDouble(
-                    (currentPage.floor() * segmentWidth),
-                    (currentPage.ceil() * segmentWidth),
-                    (currentPage - currentPage.floor()) as double,
-                  )!,
+                  duration: const Duration(milliseconds: 200),
+                  left: currentPage * w,
                   child: Container(
-                    width: segmentWidth,
+                    width: w,
                     height: 40,
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: const Color.fromARGB(255, 220, 220, 220),
-                        borderRadius: BorderRadius.circular(30),
-                      ),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(30),
                     ),
                   ),
                 ),
 
-                // LABELS
                 Row(
-                  children: List.generate(labels.length, (index) {
-                    final isSelected = (currentPage.round() == index);
+                  children: List.generate(labels.length, (i) {
+                    final selected = i == currentPage;
 
                     return Expanded(
                       child: GestureDetector(
-                        onTap: () {
-                          _controller.animateToPage(
-                            index,
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeOutCubic,
-                          );
-                        },
-                        child: Container(
+                        onTap: () => _controller.animateToPage(
+                          i,
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.easeOut,
+                        ),
+                        child: SizedBox(
                           height: 40,
-                          alignment: Alignment.center,
-                          child: Text(
-                            labels[index],
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: isSelected
-                                  ? const Color.fromARGB(255, 45, 182, 255)
-                                  : const Color.fromARGB(255, 163, 163, 163),
+                          child: Center(
+                            child: Text(
+                              labels[i],
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: selected ? Colors.blue : Colors.grey,
+                              ),
                             ),
                           ),
                         ),
@@ -150,61 +145,152 @@ class _OdoUIScreenState extends State<OdoUIScreen> {
   }
 
   // ---------------- PAGES ----------------
-
-  Widget _livePage() {
-    return _buildBaseUI(showSlider: false);
-  }
-
-  Widget _historyPage() {
-    return _buildBaseUI(showSlider: true);
-  }
-
-  Widget _alarmPage() {
-    return const Center(
-      child: Text(
-        "ALARM LIST PAGE",
-        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+  Widget _buildPage({required bool showSlider}) {
+    return Center(
+      child: SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _mainCard(),
+              const SizedBox(height: 20),
+              if (showSlider) _sliderSection(),
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  // ---------------- CORE UI ----------------
-
-  Widget _buildBaseUI({required bool showSlider}) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _mainCard(context),
-        const SizedBox(height: 30),
-        if (showSlider) _sliderSection(),
-        const SizedBox(height: 30),
-      ],
+  // ---------------- MONTHLY PAGE ----------------
+  Widget _monthlyPage() {
+    return Center(
+      child: SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Column(children: [_monthlyCard()]),
+        ),
+      ),
     );
   }
 
-  Widget _mainCard(BuildContext context) {
-    return Center(
-      child: SizedBox(
-        width: MediaQuery.of(context).size.width * 0.88,
-        height: MediaQuery.of(context).size.height * 0.65,
-        child: Card(
-          elevation: 10,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 25),
-            child: Column(
-              children: [
-                _topRow(),
-                const Divider(height: 30),
-                _statsRow(),
-                const SizedBox(height: 15),
-                Expanded(child: _detailsSection()),
-                _timestampBox(),
-              ],
+  Widget _monthlyCard() {
+    return Card(
+      elevation: 16,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                widget.vehicleId,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
+
+            const SizedBox(height: 10),
+
+            const Text(
+              "MONTHLY ANALYSIS",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Colors.blueGrey,
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            _monthlyTile(
+              "Previous Month",
+              widget.currentMonthDistance,
+              Colors.green,
+            ),
+            _monthlyTile(
+              "Current Month Running",
+              widget.runningMonthDistance,
+              Colors.blue,
+            ),
+            _monthlyTile(
+              "Month Before Last",
+              widget.prevMonthDistance,
+              Colors.grey,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _monthlyTile(String label, double? value, Color color) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withAlpha(25),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.show_chart, color: color),
+          const SizedBox(width: 10),
+          Text(label),
+          const Spacer(),
+          Text(
+            value == null ? "-- km" : "${value.toStringAsFixed(2)} km",
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
+        ],
+      ),
+    );
+  }
+
+  // ---------------- ALARM PAGE ----------------
+  Widget _alarmPage() {
+    return const Center(child: Text("ALARM LIST PAGE"));
+  }
+
+  // ---------------- MAIN CARD ----------------
+  Widget _mainCard() {
+    return Card(
+      elevation: 16,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      child: Padding(
+        padding: const EdgeInsets.all(22),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                widget.vehicleId,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            _topRow(),
+            const Divider(height: 25),
+            _statsRow(),
+            const SizedBox(height: 15),
+            _detailsSection(),
+            const SizedBox(height: 15),
+            _timestampBox(),
+          ],
         ),
       ),
     );
@@ -219,7 +305,7 @@ class _OdoUIScreenState extends State<OdoUIScreen> {
           children: [
             Text(
               widget.speed.toStringAsFixed(1),
-              style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 42, fontWeight: FontWeight.bold),
             ),
             const Text("km/h", style: TextStyle(color: Colors.grey)),
           ],
@@ -233,26 +319,34 @@ class _OdoUIScreenState extends State<OdoUIScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        _statCircle(
-          Icons.battery_charging_full,
-          widget.soc,
-          "SOC",
-          Colors.green,
+        _stat("SOC", widget.soc, Colors.green),
+        _stat("Volt", widget.voltage, Colors.orange),
+        _stat("Temp", widget.temp, Colors.red),
+      ],
+    );
+  }
+
+  Widget _stat(String label, String value, Color color) {
+    return Column(
+      children: [
+        CircleAvatar(
+          backgroundColor: color.withAlpha(50),
+          child: Icon(Icons.circle, color: color, size: 18),
         ),
-        _statCircle(Icons.bolt, widget.voltage, "Voltage", Colors.orange),
-        _statCircle(Icons.thermostat, widget.temp, "Temp", Colors.red),
+        const SizedBox(height: 6),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+        Text(label, style: const TextStyle(fontSize: 11)),
       ],
     );
   }
 
   Widget _detailsSection() {
     return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         _detailRow(Icons.electric_moped, "Current", widget.current),
         _detailRow(Icons.history, "Odometer", widget.odometer),
-        _detailRow(Icons.location_on, "Latitude", widget.latitude),
-        _detailRow(Icons.location_on_outlined, "Longitude", widget.longitude),
+        _detailRow(Icons.location_on, "Lat", widget.latitude),
+        _detailRow(Icons.location_on_outlined, "Long", widget.longitude),
       ],
     );
   }
@@ -262,7 +356,7 @@ class _OdoUIScreenState extends State<OdoUIScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.blueAccent.withAlpha(25),
+        color: Colors.blueAccent.withAlpha(20),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Center(
@@ -276,47 +370,29 @@ class _OdoUIScreenState extends State<OdoUIScreen> {
 
   Widget _sliderSection() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40),
-      child: Column(
-        children: [
-          Slider(
-            value: widget.sliderValue,
-            min: 0,
-            max: widget.maxSlider,
-            onChanged: widget.onSliderChanged,
-          ),
-        ],
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Slider(
+        value: widget.sliderValue,
+        min: 0,
+        max: widget.maxSlider == 0 ? 1 : widget.maxSlider,
+        onChanged: widget.onSliderChanged,
       ),
     );
   }
 
-  Widget _statCircle(IconData icon, String value, String label, Color color) {
-    return Column(
-      children: [
-        CircleAvatar(
-          backgroundColor: color.withAlpha(30),
-          child: Icon(icon, color: color),
-        ),
-        const SizedBox(height: 5),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
-        Text(label, style: const TextStyle(fontSize: 11)),
-      ],
-    );
-  }
-
   Widget _alarmChip(String alarm) {
-    final isWarning = alarm.toLowerCase() != "no alarm";
+    final warn = alarm.toLowerCase() != "no alarm";
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: isWarning ? Colors.red : Colors.green.withAlpha(40),
+        color: warn ? Colors.red : Colors.green.withAlpha(40),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         alarm.toUpperCase(),
         style: TextStyle(
-          color: isWarning ? Colors.white : Colors.green,
+          color: warn ? Colors.white : Colors.green,
           fontWeight: FontWeight.bold,
         ),
       ),
