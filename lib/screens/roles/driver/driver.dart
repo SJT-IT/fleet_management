@@ -38,7 +38,10 @@ class _DriverScreenState extends State<DriverScreen> {
       timestamp: '2025-03-10 11:04:00',
       sliderValue: 10,
       maxSlider: 10,
-      onSliderChanged: (double value) {}, prevMonthDistance: null, currentMonthDistance: null, runningMonthDistance: null,
+      onSliderChanged: (double value) {},
+      prevMonthDistance: null,
+      currentMonthDistance: null,
+      runningMonthDistance: null,
     ), // Odometer tab
     const DriverProfileScreen(), // Profile tab
   ];
@@ -62,9 +65,8 @@ class DriverHomeContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Use provider, not FirebaseAuth directly
     final auth = context.watch<AppAuthProvider>();
-    final userEmail = auth.user?.email ?? "Dealer";
+    final userEmail = auth.user?.email ?? "Driver";
 
     return CustomScrollView(
       slivers: [
@@ -96,28 +98,243 @@ class DriverHomeContent extends StatelessWidget {
           ),
         ),
         SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: const Text(
-              "Fleet Vehicles",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          child: Container(
+            color: const Color(0xFFF5F7FA),
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Column(
+              children: const [
+                _VehicleCard(),
+                _DealershipCard(),
+                _QuickActions(),
+                _ComplaintStatsCard(),
+                SizedBox(height: 20),
+              ],
             ),
-          ),
-        ),
-        SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (context, index) => Card(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: ListTile(
-                leading: const Icon(Icons.directions_car),
-                title: Text("Vehicle $index"),
-                subtitle: const Text("Status: Active"),
-              ),
-            ),
-            childCount: 10,
           ),
         ),
       ],
     );
   }
+}
+
+// VEHICLE CARD
+
+class _VehicleCard extends StatelessWidget {
+  const _VehicleCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return _cardWrapper(
+      child: Column(
+        children: [
+          _title("ASSIGNED VEHICLE"),
+          const SizedBox(height: 15),
+
+          _infoRow(Icons.directions_car, "Model", "Ather 450X"),
+          _infoRow(Icons.confirmation_number, "Reg No", "MH12AB1234"),
+          _statusChip("Active"),
+        ],
+      ),
+    );
+  }
+}
+
+// DEALERSHIP CARD
+
+class _DealershipCard extends StatelessWidget {
+  const _DealershipCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return _cardWrapper(
+      child: Column(
+        children: [
+          _title("DEALERSHIP INFO"),
+          const SizedBox(height: 15),
+
+          _infoRow(Icons.store, "Name", "Pune EV Motors"),
+          _infoRow(Icons.phone, "Contact", "+91 9876543210"),
+        ],
+      ),
+    );
+  }
+}
+
+// QUICK ACTIONS
+
+class _QuickActions extends StatelessWidget {
+  const _QuickActions();
+
+  @override
+  Widget build(BuildContext context) {
+    return _cardWrapper(
+      child: Column(
+        children: [
+          _title("QUICK ACTIONS"),
+          const SizedBox(height: 15),
+
+          Row(
+            children: [
+              Expanded(
+                child: _actionButton(
+                  icon: Icons.report_problem,
+                  label: "Report Issue",
+                  color: Colors.red,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 10),
+
+          Row(
+            children: [
+              Expanded(
+                child: _actionButton(
+                  icon: Icons.list_alt,
+                  label: "My Complaints",
+                  color: Colors.blue,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _actionButton(
+                  icon: Icons.support_agent,
+                  label: "Support",
+                  color: Colors.green,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// COMPLAINT STATS
+
+
+class _ComplaintStatsCard extends StatelessWidget {
+  const _ComplaintStatsCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return _cardWrapper(
+      child: Column(
+        children: [
+          _title("COMPLAINT STATUS"),
+          const SizedBox(height: 15),
+
+          _statTile("Pending", "2", Colors.orange),
+          _statTile("In Progress", "1", Colors.blue),
+          _statTile("Resolved", "5", Colors.green),
+        ],
+      ),
+    );
+  }
+}
+
+// REUSABLE (MATCHES YOUR ODO STYLE)
+
+Widget _cardWrapper({required Widget child}) {
+  return Card(
+    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+    elevation: 16,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+    child: Padding(padding: const EdgeInsets.all(20), child: child),
+  );
+}
+
+Widget _title(String text) {
+  return Align(
+    alignment: Alignment.centerLeft,
+    child: Text(
+      text,
+      style: const TextStyle(
+        fontSize: 14,
+        color: Colors.blueGrey,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+  );
+}
+
+Widget _infoRow(IconData icon, String label, String value) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 6),
+    child: Row(
+      children: [
+        Icon(icon, color: Colors.blueGrey),
+        const SizedBox(width: 10),
+        Text(label),
+        const Spacer(),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+      ],
+    ),
+  );
+}
+
+Widget _statusChip(String status) {
+  final active = status.toLowerCase() == "active";
+
+  return Container(
+    margin: const EdgeInsets.only(top: 10),
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+    decoration: BoxDecoration(
+      color: active ? Colors.green.withAlpha(40) : Colors.red,
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: Text(
+      status.toUpperCase(),
+      style: TextStyle(
+        color: active ? Colors.green : Colors.white,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+  );
+}
+
+Widget _actionButton({
+  required IconData icon,
+  required String label,
+  required Color color,
+}) {
+  return Container(
+    padding: const EdgeInsets.symmetric(vertical: 14),
+    decoration: BoxDecoration(
+      color: color.withAlpha(30),
+      borderRadius: BorderRadius.circular(14),
+    ),
+    child: Column(
+      children: [
+        Icon(icon, color: color),
+        const SizedBox(height: 6),
+        Text(
+          label,
+          style: TextStyle(color: color, fontWeight: FontWeight.bold),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _statTile(String label, String value, Color color) {
+  return Container(
+    margin: const EdgeInsets.only(bottom: 10),
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: color.withAlpha(25),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Row(
+      children: [
+        Icon(Icons.show_chart, color: color),
+        const SizedBox(width: 10),
+        Text(label),
+        const Spacer(),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+      ],
+    ),
+  );
 }
