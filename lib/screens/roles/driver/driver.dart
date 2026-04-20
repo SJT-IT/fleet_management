@@ -66,7 +66,7 @@ class DriverHomeContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AppAuthProvider>();
-    final userEmail = auth.user?.email ?? "Driver";
+    final userName = auth.fullName ?? auth.user?.email ?? "Driver";
 
     return CustomScrollView(
       slivers: [
@@ -83,12 +83,12 @@ class DriverHomeContent extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      "Welcome, $userEmail",
+                      "Welcome, $userName",
                       style: const TextStyle(color: Colors.white, fontSize: 18),
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      "Your fleet overview",
+                      "Your Vehicle Overview",
                       style: TextStyle(color: Colors.white70, fontSize: 14),
                     ),
                   ],
@@ -213,7 +213,6 @@ class _QuickActions extends StatelessWidget {
 }
 
 // COMPLAINT STATS
-
 
 class _ComplaintStatsCard extends StatelessWidget {
   const _ComplaintStatsCard();

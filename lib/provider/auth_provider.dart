@@ -12,6 +12,7 @@ class AppAuthProvider extends ChangeNotifier {
   String? successMessage;
   String? currentUserRole;
   User? user;
+  String? fullName;
 
   // ------------------ Constructor ------------------
   AppAuthProvider() {
@@ -25,17 +26,20 @@ class AppAuthProvider extends ChangeNotifier {
 
       if (user != null) {
         try {
-          final fetchedRole = await _userRepo.getUserRole(user!.uid);
+          final data = await _userRepo.getUserData(user!.uid);
 
           // Prevent async race condition
           if (FirebaseAuth.instance.currentUser?.uid == user?.uid) {
-            currentUserRole = fetchedRole;
+            currentUserRole = data?['role'] as String?;
+            fullName = data?['fullName'] as String?;
           }
         } catch (e) {
           currentUserRole = null;
+          fullName = null;
         }
       } else {
         currentUserRole = null;
+        fullName = null;
       }
 
       // Reset UI states on auth change

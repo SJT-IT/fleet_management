@@ -44,10 +44,7 @@ class ContactUsScreen extends StatelessWidget {
           children: [
             const Text(
               "We’re here to help.",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             const Text(
@@ -81,7 +78,7 @@ class ContactUsScreen extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.location_on),
               title: const Text("Our Office"),
-              subtitle: const Text("Find us on Google Maps"),
+              subtitle: const Text("Click to find us on Google Maps"),
               onTap: _launchMaps,
             ),
           ],

@@ -48,7 +48,7 @@ class AdminHomeContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AppAuthProvider>();
-    final userEmail = auth.user?.email ?? "Admin";
+    final userName = auth.fullName ?? auth.user?.email ?? "Admin";
 
     return CustomScrollView(
       slivers: [
@@ -65,12 +65,12 @@ class AdminHomeContent extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      "Welcome, $userEmail",
+                      "Welcome, $userName",
                       style: const TextStyle(color: Colors.white, fontSize: 18),
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      "Super Admin Panel",
+                      "Admin Panel",
                       style: TextStyle(color: Colors.white70, fontSize: 14),
                     ),
                   ],
