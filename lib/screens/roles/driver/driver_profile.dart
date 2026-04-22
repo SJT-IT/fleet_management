@@ -1,4 +1,5 @@
 import 'package:fleet_management/provider/auth_provider.dart';
+import 'package:fleet_management/shared/screens/account_details.dart';
 import 'package:fleet_management/shared/screens/contact_us.dart';
 import 'package:fleet_management/shared/screens/get_help.dart';
 import 'package:fleet_management/shared/screens/privacy_policy.dart';
@@ -95,23 +96,31 @@ class DriverProfileScreen extends StatelessWidget {
             // =======================
             Card(
               child: Column(
-                children: const [
+                children: [
                   ListTile(
-                    leading: Icon(Icons.person),
-                    title: Text("Account Details"),
+                    leading: const Icon(Icons.phone),
+                    title: const Text("Account Details"),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AccountDetailsScreen(),
+                        ),
+                      );
+                    },
                   ),
-                  Divider(),
-                  ListTile(
+                  const Divider(),
+                  const ListTile(
                     leading: Icon(Icons.payment),
                     title: Text("Payment History"),
                   ),
-                  Divider(),
-                  ListTile(
+                  const Divider(),
+                  const ListTile(
                     leading: Icon(Icons.notifications),
                     title: Text("Notifications"),
                   ),
-                  Divider(),
-                  ListTile(
+                  const Divider(),
+                  const ListTile(
                     leading: Icon(Icons.settings),
                     title: Text("Settings"),
                   ),
