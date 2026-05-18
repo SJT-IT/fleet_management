@@ -70,7 +70,7 @@ class AppAuthProvider extends ChangeNotifier {
       isLoading = false; // Only stop loading on error
       notifyListeners();
     }
-    // ❗ No finally block → listener handles success case
+    // No finally block → listener handles success case
   }
 
   // ------------------ LOGIN ------------------

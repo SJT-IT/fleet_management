@@ -1,3 +1,5 @@
+import 'package:fleet_management/screens/roles/sales_executive/sales_executive.dart';
+import 'package:fleet_management/screens/roles/service_engineer/service_engineer.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fleet_management/provider/auth_provider.dart';
@@ -62,6 +64,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
         return const DealerScreen();
       case 'Driver':
         return const DriverScreen();
+      case 'ServiceEngineer':
+        return const ServiceEngineerScreen();
+      case 'SalesExecutive':
+        return const SalesExecutiveScreen();
       default:
         return Scaffold(
           body: Center(
