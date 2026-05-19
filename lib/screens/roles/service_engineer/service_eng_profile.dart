@@ -73,7 +73,7 @@ class ServiceProfileScreen extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Admin Profile")),
+      appBar: AppBar(title: const Text("Service Engineer Profile")),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -84,7 +84,7 @@ class ServiceProfileScreen extends StatelessWidget {
             Card(
               child: ListTile(
                 leading: const CircleAvatar(child: Icon(Icons.person)),
-                title: const Text("Admin"),
+                title: const Text("Service Engineer"),
                 subtitle: Text(user?.email ?? "No Email"),
                 // trailing: const Icon(Icons.edit),
               ),
