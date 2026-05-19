@@ -18,12 +18,12 @@ class _ServiceEngineerScreenState extends State<ServiceEngineerScreen> {
     setState(() => _currentIndex = index);
   }
 
-  late final List<Widget> _pages = [
-    const ServiceEngineerHomeContent(),
-    const Center(child: Text("Vehicle Search")),
-    const Center(child: Text("Diagnostics / ODO")),
-    const ServiceProfileScreen(),
-  ];
+  List<Widget> get _pages => [
+        const ServiceEngineerHomeContent(),
+        const Center(child: Text("Vehicle Search")),
+        const Center(child: Text("Diagnostics / ODO")),
+        const ServiceProfileScreen(),
+      ];
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +44,8 @@ class ServiceEngineerHomeContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<AppAuthProvider>();
 
-    final userName = auth.fullName ?? auth.user?.email ?? "Service Engineer";
+    final userName =
+        auth.fullName ?? auth.user?.email ?? "Service Engineer";
 
     return CustomScrollView(
       slivers: [
@@ -52,17 +53,11 @@ class ServiceEngineerHomeContent extends StatelessWidget {
           expandedHeight: 160,
           pinned: true,
           floating: true,
-          centerTitle: true, // keeps expanded state centered nicely
+          centerTitle: false, // FIXED for consistency
 
           flexibleSpace: FlexibleSpaceBar(
-            centerTitle: false,
-            titlePadding: const EdgeInsets.only(
-              left: 16,
-              bottom: 6,
-            ),
-
+            titlePadding: const EdgeInsets.only(left: 16, bottom: 6),
             title: const Text("Service Dashboard"),
-
             background: Container(
               color: const Color(0xFFFF6F00),
               child: Center(
@@ -77,12 +72,18 @@ class ServiceEngineerHomeContent extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text(
                       "Welcome, $userName",
-                      style: const TextStyle(color: Colors.white, fontSize: 18),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     const Text(
                       "Vehicle Diagnostics & Maintenance",
-                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                      ),
                     ),
                   ],
                 ),
@@ -91,17 +92,18 @@ class ServiceEngineerHomeContent extends StatelessWidget {
           ),
         ),
 
+        // 🔥 Better sliver structure (performance improvement)
         SliverToBoxAdapter(
           child: Container(
             color: const Color(0xFFF5F7FA),
             padding: const EdgeInsets.only(top: 10, bottom: 30),
             child: Column(
-              children: const [
-                _FleetHealthSummary(),
-                _CriticalAlertsCard(),
-                _ComplaintsQueueCard(),
-                _MaintenanceScheduleCard(),
-                _QuickActionsCard(),
+              children: [
+                const _FleetHealthSummary(),
+                const _CriticalAlertsCard(),
+                const _ComplaintsQueueCard(),
+                const _MaintenanceScheduleCard(),
+                const _QuickActionsCard(),
               ],
             ),
           ),
@@ -118,25 +120,56 @@ class _FleetHealthSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     return Wrap(
       children: [
-        _summaryTile("Active", "42", Icons.directions_car, Colors.green),
-        _summaryTile("In Service", "6", Icons.build, Colors.orange),
-        _summaryTile("Critical", "3", Icons.warning, Colors.red),
-        _summaryTile("Complaints", "11", Icons.report_problem, Colors.blue),
+        _summaryTile(
+          context,
+          "Active",
+          "42",
+          Icons.directions_car,
+          Colors.green,
+        ),
+        _summaryTile(
+          context,
+          "In Service",
+          "6",
+          Icons.build,
+          Colors.orange,
+        ),
+        _summaryTile(
+          context,
+          "Critical",
+          "3",
+          Icons.warning,
+          Colors.red,
+        ),
+        _summaryTile(
+          context,
+          "Complaints",
+          "11",
+          Icons.report_problem,
+          Colors.blue,
+        ),
       ],
     );
   }
 }
 
-Widget _summaryTile(String title, String value, IconData icon, Color color) {
+Widget _summaryTile(
+  BuildContext context,
+  String title,
+  String value,
+  IconData icon,
+  Color color,
+) {
+  final width = MediaQuery.of(context).size.width / 2 - 16;
+
   return SizedBox(
-    width:
-        // ignore: deprecated_member_use
-        MediaQueryData.fromView(WidgetsBinding.instance.window).size.width / 2 -
-        16,
+    width: width,
     child: Card(
       margin: const EdgeInsets.all(8),
       elevation: 14,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(22),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(18),
         child: Column(
@@ -214,7 +247,10 @@ class _AlertTile extends StatelessWidget {
         backgroundColor: color.withAlpha(30),
         child: Icon(icon, color: color),
       ),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+      title: Text(
+        title,
+        style: const TextStyle(fontWeight: FontWeight.bold),
+      ),
       subtitle: Text(subtitle),
       trailing: const Icon(Icons.arrow_forward_ios, size: 16),
     );
@@ -367,7 +403,9 @@ Widget _cardWrapper({required String title, required Widget child}) {
   return Card(
     margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
     elevation: 16,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(28),
+    ),
     child: Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -409,7 +447,10 @@ Widget _actionButton({
         Text(
           label,
           textAlign: TextAlign.center,
-          style: TextStyle(color: color, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: color,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ],
     ),

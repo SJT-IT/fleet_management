@@ -1,4 +1,3 @@
-import 'package:fleet_management/screens/roles/sales_executive/sales_exe_profile.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fleet_management/provider/auth_provider.dart';
@@ -8,21 +7,22 @@ class SalesExecutiveScreen extends StatefulWidget {
   const SalesExecutiveScreen({super.key});
 
   @override
-  State<SalesExecutiveScreen> createState() => _SalesExecutiveScreenState();
+  State<SalesExecutiveScreen> createState() =>
+      SalesExecutiveScreenDashboardState();
 }
 
-class _SalesExecutiveScreenState extends State<SalesExecutiveScreen> {
+class SalesExecutiveScreenDashboardState extends State<SalesExecutiveScreen> {
   int _currentIndex = 0;
 
   void _onNavTap(int index) {
     setState(() => _currentIndex = index);
   }
 
-  late final List<Widget> _pages = [
-    const SalesExecutiveHomeContent(),
-    const Center(child: Text("Search")),
-    const Center(child: Text("ODO")),
-    const SalesProfileScreen(),
+  List<Widget> get _pages => [
+    const BatteryAllocationHome(),
+    const Center(child: Text("Search Batteries")),
+    const Center(child: Text("History")),
+    const Center(child: Text("Profile")),
   ];
 
   @override
@@ -37,13 +37,15 @@ class _SalesExecutiveScreenState extends State<SalesExecutiveScreen> {
   }
 }
 
-class SalesExecutiveHomeContent extends StatelessWidget {
-  const SalesExecutiveHomeContent({super.key});
+/* ---------------- HOME ---------------- */
+
+class BatteryAllocationHome extends StatelessWidget {
+  const BatteryAllocationHome({super.key});
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AppAuthProvider>();
-    final userName = auth.fullName ?? auth.user?.email ?? "Sales Executive";
+    final userName = auth.fullName ?? auth.user?.email ?? "User";
 
     return CustomScrollView(
       slivers: [
@@ -51,45 +53,30 @@ class SalesExecutiveHomeContent extends StatelessWidget {
           expandedHeight: 160,
           pinned: true,
           floating: true,
+          centerTitle: false,
           flexibleSpace: FlexibleSpaceBar(
-            title: const Text("Sales Executive"),
+            title: const Text("Battery Allocation"),
+            titlePadding: const EdgeInsets.only(left: 16, bottom: 10),
             background: Container(
               color: Colors.green,
               child: Center(
-                child: Text(
-                  "Welcome, $userName",
-                  style: const TextStyle(color: Colors.white, fontSize: 20),
-                ),
-              ),
-            ),
-          ),
-        ),
-
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Card(
-              elevation: 12,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Padding(
-                padding: EdgeInsets.all(30),
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.point_of_sale, size: 80, color: Colors.green),
-                    SizedBox(height: 20),
-                    Text(
-                      "Sales Executive Dashboard",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    const Icon(
+                      Icons.battery_charging_full,
+                      color: Colors.white,
+                      size: 40,
                     ),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     Text(
-                      "Welcome user. Sales tools will appear here.",
-                      textAlign: TextAlign.center,
+                      "Welcome, $userName",
+                      style: const TextStyle(color: Colors.white, fontSize: 18),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      "Dealer Battery Assignment Control",
+                      style: TextStyle(color: Colors.white70, fontSize: 13),
                     ),
                   ],
                 ),
@@ -97,7 +84,249 @@ class SalesExecutiveHomeContent extends StatelessWidget {
             ),
           ),
         ),
+
+        SliverToBoxAdapter(
+          child: Container(
+            color: const Color(0xFFF5F7FA),
+            padding: const EdgeInsets.only(top: 10, bottom: 30),
+            child: Column(
+              children: const [
+                _AllocationOverview(),
+                _AvailableBatteryPool(),
+                _InServiceSection(),
+                _AssignedSection(),
+              ],
+            ),
+          ),
+        ),
       ],
+    );
+  }
+}
+
+/* ---------------- OVERVIEW ---------------- */
+
+class _AllocationOverview extends StatelessWidget {
+  const _AllocationOverview();
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      children: const [
+        _SummaryTile(
+          title: "Available",
+          value: "18",
+          icon: Icons.check_circle,
+          color: Colors.green,
+        ),
+        _SummaryTile(
+          title: "In Service",
+          value: "6",
+          icon: Icons.build,
+          color: Colors.orange,
+        ),
+        _SummaryTile(
+          title: "Assigned",
+          value: "24",
+          icon: Icons.link,
+          color: Colors.blue,
+        ),
+      ],
+    );
+  }
+}
+
+class _SummaryTile extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+  final Color color;
+
+  const _SummaryTile({
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 180,
+      child: Card(
+        margin: const EdgeInsets.all(8),
+        elevation: 10,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            children: [
+              Icon(icon, color: color, size: 30),
+              const SizedBox(height: 10),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(title),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/* ---------------- AVAILABLE (MAIN ACTION AREA) ---------------- */
+
+class _AvailableBatteryPool extends StatelessWidget {
+  const _AvailableBatteryPool();
+
+  @override
+  Widget build(BuildContext context) {
+    return _CardWrapper(
+      title: "AVAILABLE FOR ALLOCATION",
+      child: const Column(
+        children: [
+          _BatteryTile(id: "BAT-1001", soc: "92%"),
+          _BatteryTile(id: "BAT-1002", soc: "89%"),
+          _BatteryTile(id: "BAT-1003", soc: "95%"),
+        ],
+      ),
+    );
+  }
+}
+
+/* ---------------- IN SERVICE ---------------- */
+
+class _InServiceSection extends StatelessWidget {
+  const _InServiceSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return _CardWrapper(
+      title: "IN SERVICE (UNAVAILABLE)",
+      child: const Column(
+        children: [
+          ListTile(
+            leading: Icon(Icons.build, color: Colors.orange),
+            title: Text("BAT-2001"),
+            subtitle: Text("Under maintenance"),
+          ),
+          ListTile(
+            leading: Icon(Icons.build, color: Colors.orange),
+            title: Text("BAT-2002"),
+            subtitle: Text("Diagnostics ongoing"),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/* ---------------- ASSIGNED ---------------- */
+
+class _AssignedSection extends StatelessWidget {
+  const _AssignedSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return _CardWrapper(
+      title: "ASSIGNED TO DEALERS",
+      child: const Column(
+        children: [
+          ListTile(
+            leading: Icon(Icons.link, color: Colors.blue),
+            title: Text("BAT-3001 → Dealer A"),
+          ),
+          ListTile(
+            leading: Icon(Icons.link, color: Colors.blue),
+            title: Text("BAT-3002 → Dealer B"),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/* ---------------- BATTERY TILE ---------------- */
+
+class _BatteryTile extends StatelessWidget {
+  final String id;
+  final String soc;
+
+  const _BatteryTile({required this.id, required this.soc});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.green.withAlpha(20),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.battery_full, color: Colors.green),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(id, style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text("SOC: $soc"),
+              ],
+            ),
+          ),
+          const Text(
+            "AVAILABLE",
+            style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/* ---------------- SHARED ---------------- */
+
+class _CardWrapper extends StatelessWidget {
+  final String title;
+  final Widget child;
+
+  const _CardWrapper({required this.title, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      elevation: 12,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.blueGrey,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            child,
+          ],
+        ),
+      ),
     );
   }
 }
